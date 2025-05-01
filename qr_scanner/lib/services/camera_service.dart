@@ -101,7 +101,7 @@ class CameraService with ChangeNotifier {
         _isStreaming = true;
         
         // Use periodic capture instead of streaming
-        _captureTimer = Timer.periodic(const Duration(milliseconds: 200), (timer) async {
+        _captureTimer = Timer.periodic(const Duration(milliseconds: 50), (timer) async {
           if (!_isStreaming || _controller == null) {
             timer.cancel();
             return;
