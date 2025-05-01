@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:msgpack_dart/msgpack_dart.dart' as msgpack;
 import 'package:flutter/foundation.dart';
+import '../services/sound_service.dart';
 
 class QRResult {
   final String data;
@@ -43,7 +44,7 @@ class QRResult {
   }
 }
 
-class BackendService with ChangeNotifier {
+class BackendService extends ChangeNotifier {
   static const String _host = '127.0.0.1';
   static const int _port = 5000;
   
@@ -51,128 +52,134 @@ class BackendService with ChangeNotifier {
   bool _isConnected = false;
   final StreamController<QRResult> _resultStreamController = StreamController<QRResult>.broadcast();
   final StreamController<String> _errorStreamController = StreamController<String>.broadcast();
+  final List<Map<String, dynamic>> _detectedCodes = [];
+  final SoundService _soundService = SoundService();
 
   Stream<QRResult> get resultStream => _resultStreamController.stream;
   Stream<String> get errorStream => _errorStreamController.stream;
   bool get isConnected => _isConnected;
+  List<Map<String, dynamic>> get detectedCodes => List.unmodifiable(_detectedCodes);
+
+  Future<void> initialize() async {
+    await _soundService.initialize();
+  }
 
   Future<void> connect() async {
-    debugPrint('BackendService: Connecting to $_host:$_port...');
+    if (_isConnected) return;
+
     int attempts = 0;
     const maxAttempts = 5;
-    const retryDelay = Duration(seconds: 1);
-    
+
     while (attempts < maxAttempts) {
       try {
-        _socket = await Socket.connect(_host, _port);
+        _socket = await Socket.connect('127.0.0.1', 5000);
         _isConnected = true;
-        notifyListeners();
-        debugPrint('BackendService: Connected successfully');
-
-        // Start listening for responses
+        debugPrint('Connected to backend server');
+        
         _socket!.listen(
-          (data) {
-            try {
-              debugPrint('BackendService: Received data from server');
-              final response = msgpack.deserialize(data);
-              debugPrint('BackendService: Deserialized response type: ${response['type']}');
-              
-              if (response['type'] == 'qr_results' && 
-                  response['data'] != null && 
-                  response['data'].isNotEmpty) {
-                
-                final results = response['data'] as List;
-                debugPrint('BackendService: Got ${results.length} QR results');
-                
-                if (results.isNotEmpty) {
-                  for (var result in results) {
-                    try {
-                      final qrData = result['data']?.toString() ?? '';
-                      if (qrData.isNotEmpty) {
-                        debugPrint('BackendService: Processing QR result: $qrData');
-                        final qrResult = QRResult.fromJson(result as Map<dynamic, dynamic>);
-                        debugPrint('BackendService: Successfully created QRResult object');
-                        _resultStreamController.add(qrResult);
-                        debugPrint('BackendService: Added QR result to stream');
-                      }
-                    } catch (e, stackTrace) {
-                      debugPrint('BackendService: Error processing individual QR result: $e');
-                      debugPrint('BackendService: Stack trace: $stackTrace');
-                    }
-                  }
-                }
-              }
-            } catch (e, stackTrace) {
-              debugPrint('BackendService: Error processing response: $e');
-              debugPrint('BackendService: Stack trace: $stackTrace');
-              _errorStreamController.add('Error processing response: $e');
-            }
+          (List<int> data) {
+            _handleServerMessage(data);
           },
           onError: (error) {
-            debugPrint('BackendService: Socket error: $error');
-            _errorStreamController.add('Socket error: $error');
-            _disconnect();
+            debugPrint('Socket error: $error');
+            _isConnected = false;
+            notifyListeners();
           },
           onDone: () {
-            debugPrint('BackendService: Socket connection closed');
-            _disconnect();
+            debugPrint('Socket closed');
+            _isConnected = false;
+            notifyListeners();
           },
         );
         
-        // If we get here, connection was successful
-        return;
-        
+        break;
       } catch (e) {
         attempts++;
         debugPrint('BackendService: Connection attempt $attempts failed: $e');
         if (attempts < maxAttempts) {
-          debugPrint('BackendService: Retrying in ${retryDelay.inSeconds} seconds...');
-          await Future.delayed(retryDelay);
+          debugPrint('BackendService: Retrying in 1 seconds...');
+          await Future.delayed(const Duration(seconds: 1));
         }
       }
     }
-    
-    // If we get here, all attempts failed
-    debugPrint('BackendService: All connection attempts failed');
-    _errorStreamController.add('Failed to connect after $maxAttempts attempts');
-    throw Exception('Failed to connect to backend after $maxAttempts attempts');
-  }
 
-  Future<void> sendFrame(Uint8List frameData) async {
-    if (!_isConnected || _socket == null) {
-      debugPrint('BackendService: Cannot send frame - not connected');
-      throw Exception('Not connected to backend');
+    if (!_isConnected) {
+      debugPrint('BackendService: All connection attempts failed');
+      throw Exception('Failed to connect to backend after $maxAttempts attempts');
     }
 
-    try {
-      debugPrint('BackendService: Sending frame of size ${frameData.length} bytes');
-      final message = msgpack.serialize({
-        'type': 'frame',
-        'data': frameData,
-        'timestamp': DateTime.now().millisecondsSinceEpoch / 1000,
-      });
-      _socket!.add(message);
-      debugPrint('BackendService: Frame sent successfully');
-    } catch (e) {
-      debugPrint('BackendService: Error sending frame: $e');
-      _errorStreamController.add('Error sending frame: $e');
-    }
-  }
-
-  void _disconnect() {
-    debugPrint('BackendService: Disconnecting...');
-    _socket?.close();
-    _socket = null;
-    _isConnected = false;
     notifyListeners();
-    debugPrint('BackendService: Disconnected');
   }
 
   Future<void> disconnect() async {
-    debugPrint('BackendService: Cleaning up...');
-    _disconnect();
-    await _resultStreamController.close();
-    await _errorStreamController.close();
-    debugPrint('BackendService: Cleanup completed');
+    await _socket?.close();
+    _socket = null;
+    _isConnected = false;
+    notifyListeners();
+  }
+
+  Future<void> sendFrame(Uint8List frameData) async {
+    if (!_isConnected) {
+      debugPrint('Cannot send frame - not connected');
+      return;
+    }
+
+    try {
+      final message = {
+        'type': 'frame',
+        'data': frameData,
+      };
+      
+      final packed = Uint8List.fromList(msgpack.serialize(message));
+      _socket?.add(packed);
+      await _socket?.flush();
+    } catch (e) {
+      debugPrint('Error sending frame: $e');
+    }
+  }
+
+  void _handleServerMessage(List<int> data) {
+    try {
+      final dynamic rawMessage = msgpack.deserialize(Uint8List.fromList(data));
+      if (rawMessage is Map) {
+        final message = Map<String, dynamic>.from(rawMessage);
+        if (message['type'] == 'qr_results') {
+          final List<dynamic> rawResults = message['data'] as List<dynamic>;
+          if (rawResults.isNotEmpty) {
+            final qrMap = Map<String, dynamic>.from(rawResults.first as Map);
+            final qrResult = QRResult(
+              data: qrMap['data'].toString(),
+              type: qrMap['type'].toString(),
+              rect: (qrMap['rect'] as Map<dynamic, dynamic>).map(
+                (key, value) => MapEntry(key.toString(), value as int),
+              ),
+              polygon: (qrMap['polygon'] as List).map((point) {
+                final pts = point as List;
+                return [pts[0] as int, pts[1] as int];
+              }).toList(),
+              timestamp: DateTime.fromMillisecondsSinceEpoch(
+                (qrMap['timestamp'] as num).toInt() * 1000,
+              ),
+            );
+
+            debugPrint('Detected QR code: ${qrResult.data}');
+            _resultStreamController.add(qrResult);
+            _soundService.playQRDetectedSound();
+            notifyListeners();
+          }
+        }
+      }
+    } catch (e, stackTrace) {
+      debugPrint('Error handling server message: $e');
+      debugPrint('Stack trace: $stackTrace');
+      _errorStreamController.add(e.toString());
+    }
+  }
+
+  @override
+  void dispose() {
+    disconnect();
+    _soundService.dispose();
+    super.dispose();
   }
 } 

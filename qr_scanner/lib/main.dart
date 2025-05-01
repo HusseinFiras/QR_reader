@@ -47,9 +47,17 @@ Future<Process?> startPythonBackend() async {
     }
 
     debugPrint('Starting Python backend server...');
+    final String vbsPath = path.join(Directory.current.path, 'python_backend', 'start_qr_server.vbs');
+    
+    if (!File(vbsPath).existsSync()) {
+      debugPrint('VBS wrapper script not found at: $vbsPath');
+      return null;
+    }
+    
+    debugPrint('Using VBS wrapper to start Python server invisibly...');
     final process = await Process.start(
-      'py',
-      [scriptPath],
+      'wscript.exe',
+      [vbsPath, scriptPath],
       mode: ProcessStartMode.detached,
       runInShell: true
     );
