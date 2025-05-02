@@ -197,199 +197,299 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
-        body: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Row(
-            children: [
-              // QR Scanner Panel
-              Expanded(
-                flex: 1,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF23262B),
-                    borderRadius: BorderRadius.circular(16),
+        body: Row(
+          children: [
+            // Sidebar
+            Container(
+              width: 90,
+              color: const Color(0xFF23262B),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 24),
+                  _SidebarItem(
+                    icon: Icons.dashboard,
+                    label: 'لوحة التحكم',
+                    selected: false,
+                    onTap: () {},
                   ),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'ماسح رمز QR',
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.right,
-                      ),
-                      const SizedBox(height: 16),
-                      Expanded(
-                        child: Center(
-                          child: AspectRatio(
-                            aspectRatio: 1,
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                StreamBuilder<QRResult>(
-                                  stream: _backendService.resultStream,
-                                  builder: (context, snapshot) {
-                                    if (snapshot.hasData && snapshot.data != null) {
-                                      WidgetsBinding.instance.addPostFrameCallback((_) {
-                                        _onQRDetected(snapshot.data!);
-                                      });
-                                    }
-                                    return CameraPreviewWidget(
-                                      cameraService: _cameraService,
-                                      onFrameCaptured: _handleFrameCaptured,
-                                    );
-                                  },
-                                ),
-                                if (_errorMessage != null)
-                                  Center(
-                                    child: Container(
-                                      padding: const EdgeInsets.all(16),
-                                      color: Colors.black54,
-                                      child: Text(
-                                        _errorMessage!,
-                                        style: const TextStyle(color: Colors.white),
+                  const SizedBox(height: 8),
+                  _SidebarItem(
+                    icon: Icons.group,
+                    label: 'المقاتلين',
+                    selected: false,
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 8),
+                  _SidebarItem(
+                    icon: Icons.qr_code,
+                    label: 'الدوام',
+                    selected: true,
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 8),
+                  _SidebarItem(
+                    icon: Icons.bar_chart,
+                    label: 'التقارير',
+                    selected: false,
+                    onTap: () {},
+                  ),
+                  const SizedBox(height: 8),
+                  _SidebarItem(
+                    icon: Icons.settings,
+                    label: 'الاعدادات',
+                    selected: false,
+                    onTap: () {},
+                  ),
+                  const Spacer(),
+                ],
+              ),
+            ),
+            // Main content
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    // QR Scanner Panel
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF23262B),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'ماسح رمز QR',
+                              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 16),
+                            Expanded(
+                              child: Center(
+                                child: AspectRatio(
+                                  aspectRatio: 1,
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      StreamBuilder<QRResult>(
+                                        stream: _backendService.resultStream,
+                                        builder: (context, snapshot) {
+                                          if (snapshot.hasData && snapshot.data != null) {
+                                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                                              _onQRDetected(snapshot.data!);
+                                            });
+                                          }
+                                          return CameraPreviewWidget(
+                                            cameraService: _cameraService,
+                                            onFrameCaptured: _handleFrameCaptured,
+                                          );
+                                        },
                                       ),
-                                    ),
-                                  ),
-                                if (_showSuccessAnimation)
-                                  Positioned.fill(
-                                    child: Container(
-                                      color: Colors.green.withOpacity(0.3),
-                                      child: const Center(
-                                        child: Icon(
-                                          Icons.check_circle,
-                                          color: Colors.white,
-                                          size: 100,
+                                      if (_errorMessage != null)
+                                        Center(
+                                          child: Container(
+                                            padding: const EdgeInsets.all(16),
+                                            color: Colors.black54,
+                                            child: Text(
+                                              _errorMessage!,
+                                              style: const TextStyle(color: Colors.white),
+                                            ),
+                                          ),
                                         ),
-                                      ),
-                                    ),
+                                      if (_showSuccessAnimation)
+                                        Positioned.fill(
+                                          child: Container(
+                                            color: Colors.green.withOpacity(0.3),
+                                            child: const Center(
+                                              child: Icon(
+                                                Icons.check_circle,
+                                                color: Colors.white,
+                                                size: 100,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                    ],
                                   ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 24),
+                    // Manual Entry Panel
+                    Expanded(
+                      flex: 1,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF23262B),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Text(
+                              'إدخال يدوي',
+                              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _numberController,
+                              decoration: InputDecoration(
+                                labelText: 'رقم المقاتل',
+                                labelStyle: const TextStyle(color: Colors.white70),
+                                filled: true,
+                                fillColor: const Color(0xFF181B20),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: TextAlign.right,
+                            ),
+                            const SizedBox(height: 16),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: TextField(
+                                    controller: _dateController,
+                                    readOnly: true,
+                                    decoration: InputDecoration(
+                                      labelText: 'التاريخ',
+                                      labelStyle: const TextStyle(color: Colors.white70),
+                                      filled: true,
+                                      fillColor: const Color(0xFF181B20),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    style: const TextStyle(color: Colors.white),
+                                    textAlign: TextAlign.right,
+                                    onTap: _pickDate,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: TextField(
+                                    controller: _timeController,
+                                    readOnly: true,
+                                    decoration: InputDecoration(
+                                      labelText: 'الوقت',
+                                      labelStyle: const TextStyle(color: Colors.white70),
+                                      filled: true,
+                                      fillColor: const Color(0xFF181B20),
+                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    style: const TextStyle(color: Colors.white),
+                                    textAlign: TextAlign.right,
+                                    onTap: _pickTime,
+                                  ),
+                                ),
                               ],
                             ),
-                          ),
+                            const SizedBox(height: 16),
+                            TextField(
+                              controller: _notesController,
+                              maxLines: 2,
+                              decoration: InputDecoration(
+                                labelText: 'ملاحظات',
+                                labelStyle: const TextStyle(color: Colors.white70),
+                                filled: true,
+                                fillColor: const Color(0xFF181B20),
+                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              style: const TextStyle(color: Colors.white),
+                              textAlign: TextAlign.right,
+                            ),
+                            const Spacer(),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF90B4FF),
+                                      foregroundColor: Colors.black,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    icon: const Icon(Icons.login),
+                                    label: const Text('تسجيل حضور يدوي'),
+                                    onPressed: () {},
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF90B4FF),
+                                      foregroundColor: Colors.black,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                    ),
+                                    icon: const Icon(Icons.logout),
+                                    label: const Text('تسجيل انصراف يدوي'),
+                                    onPressed: () {},
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 8),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(width: 24),
-              // Manual Entry Panel
-              Expanded(
-                flex: 1,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF23262B),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const Text(
-                        'إدخال يدوي',
-                        style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                        textAlign: TextAlign.right,
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _numberController,
-                        decoration: InputDecoration(
-                          labelText: 'رقم المقاتل',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: const Color(0xFF181B20),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        style: const TextStyle(color: Colors.white),
-                        textAlign: TextAlign.right,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _dateController,
-                              readOnly: true,
-                              decoration: InputDecoration(
-                                labelText: 'التاريخ',
-                                labelStyle: const TextStyle(color: Colors.white70),
-                                filled: true,
-                                fillColor: const Color(0xFF181B20),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.right,
-                              onTap: _pickDate,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: TextField(
-                              controller: _timeController,
-                              readOnly: true,
-                              decoration: InputDecoration(
-                                labelText: 'الوقت',
-                                labelStyle: const TextStyle(color: Colors.white70),
-                                filled: true,
-                                fillColor: const Color(0xFF181B20),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.right,
-                              onTap: _pickTime,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _notesController,
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          labelText: 'ملاحظات',
-                          labelStyle: const TextStyle(color: Colors.white70),
-                          filled: true,
-                          fillColor: const Color(0xFF181B20),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                        ),
-                        style: const TextStyle(color: Colors.white),
-                        textAlign: TextAlign.right,
-                      ),
-                      const Spacer(),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF90B4FF),
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              icon: const Icon(Icons.login),
-                              label: const Text('تسجيل حضور يدوي'),
-                              onPressed: () {},
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF90B4FF),
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              icon: const Icon(Icons.logout),
-                              label: const Text('تسجيل انصراف يدوي'),
-                              onPressed: () {},
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Sidebar item widget
+class _SidebarItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  const _SidebarItem({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+    Key? key,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: selected ? const Color(0xFF181B20) : Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: selected ? const Color(0xFF90B4FF) : Colors.white, size: 28),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: selected ? const Color(0xFF90B4FF) : Colors.white,
+                  fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 13,
                 ),
+                textAlign: TextAlign.center,
               ),
             ],
           ),
