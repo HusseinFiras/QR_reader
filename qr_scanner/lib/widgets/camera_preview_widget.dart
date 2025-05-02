@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:camera/camera.dart';
 import '../services/camera_service.dart';
+import 'dart:async';
 
 class CameraPreviewWidget extends StatefulWidget {
   final CameraService cameraService;
@@ -20,13 +21,15 @@ class CameraPreviewWidget extends StatefulWidget {
 
 class _CameraPreviewWidgetState extends State<CameraPreviewWidget> {
   Uint8List? _lastFrame;
+  StreamSubscription<Uint8List>? _frameSubscription;
 
   @override
   void initState() {
     super.initState();
     if (defaultTargetPlatform == TargetPlatform.windows) {
       // Listen to frame stream for Windows
-      widget.cameraService.frameStream.listen((frame) {
+      _frameSubscription = widget.cameraService.frameStream.listen((frame) {
+        if (!mounted) return;
         setState(() {
           _lastFrame = frame;
         });
@@ -70,8 +73,7 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> {
 
   @override
   void dispose() {
-    // No need to explicitly cancel stream subscription as it will be
-    // automatically closed when the widget is disposed
+    _frameSubscription?.cancel();
     super.dispose();
   }
 } 

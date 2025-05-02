@@ -6,6 +6,7 @@ import '../services/backend_service.dart';
 import '../services/scanner_performance_service.dart';
 import '../utils/image_converter.dart';
 import '../widgets/camera_preview_widget.dart';
+import 'fighters_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -30,6 +31,9 @@ class _HomeScreenState extends State<HomeScreen> {
 
   DateTime? _selectedDateTime;
   bool _qrCooldown = false;
+
+  // Add this for page switching
+  String selectedPage = 'dashboard';
 
   @override
   void initState() {
@@ -182,6 +186,210 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  // Remove _navigateToFighters and use this instead
+  void _onSidebarItemTap(String page) {
+    setState(() {
+      selectedPage = page;
+    });
+  }
+
+  Widget _buildDashboardContent() {
+    return Row(
+      children: [
+        // QR Scanner Panel
+        Expanded(
+          flex: 1,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF23262B),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'ماسح رمز QR',
+                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.right,
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: Center(
+                    child: AspectRatio(
+                      aspectRatio: 1,
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          StreamBuilder<QRResult>(
+                            stream: _backendService.resultStream,
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData && snapshot.data != null) {
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  _onQRDetected(snapshot.data!);
+                                });
+                              }
+                              return CameraPreviewWidget(
+                                cameraService: _cameraService,
+                                onFrameCaptured: _handleFrameCaptured,
+                              );
+                            },
+                          ),
+                          if (_errorMessage != null)
+                            Center(
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                color: Colors.black54,
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                          if (_showSuccessAnimation)
+                            Positioned.fill(
+                              child: Container(
+                                color: Colors.green.withOpacity(0.3),
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.check_circle,
+                                    color: Colors.white,
+                                    size: 100,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(width: 24),
+        // Manual Entry Panel
+        Expanded(
+          flex: 1,
+          child: Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF23262B),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'إدخال يدوي',
+                  style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.right,
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _numberController,
+                  decoration: InputDecoration(
+                    labelText: 'رقم المقاتل',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: const Color(0xFF181B20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  textAlign: TextAlign.right,
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        controller: _dateController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: 'التاريخ',
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          filled: true,
+                          fillColor: const Color(0xFF181B20),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        textAlign: TextAlign.right,
+                        onTap: _pickDate,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: TextField(
+                        controller: _timeController,
+                        readOnly: true,
+                        decoration: InputDecoration(
+                          labelText: 'الوقت',
+                          labelStyle: const TextStyle(color: Colors.white70),
+                          filled: true,
+                          fillColor: const Color(0xFF181B20),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        style: const TextStyle(color: Colors.white),
+                        textAlign: TextAlign.right,
+                        onTap: _pickTime,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: _notesController,
+                  maxLines: 2,
+                  decoration: InputDecoration(
+                    labelText: 'ملاحظات',
+                    labelStyle: const TextStyle(color: Colors.white70),
+                    filled: true,
+                    fillColor: const Color(0xFF181B20),
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  style: const TextStyle(color: Colors.white),
+                  textAlign: TextAlign.right,
+                ),
+                const Spacer(),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF90B4FF),
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        icon: const Icon(Icons.login),
+                        label: const Text('تسجيل حضور يدوي'),
+                        onPressed: () {},
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF90B4FF),
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        icon: const Icon(Icons.logout),
+                        label: const Text('تسجيل انصراف يدوي'),
+                        onPressed: () {},
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Directionality(
@@ -191,9 +399,9 @@ class _HomeScreenState extends State<HomeScreen> {
         appBar: AppBar(
           backgroundColor: const Color(0xFF181B20),
           elevation: 0,
-          title: const Text(
-            'تسجيل الدوام',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          title: Text(
+            selectedPage == 'fighters' ? 'المقاتلين' : 'تسجيل الدوام',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
           ),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
@@ -210,22 +418,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   _SidebarItem(
                     icon: Icons.dashboard,
                     label: 'لوحة التحكم',
-                    selected: false,
-                    onTap: () {},
+                    selected: selectedPage == 'dashboard',
+                    onTap: () => _onSidebarItemTap('dashboard'),
                   ),
                   const SizedBox(height: 8),
                   _SidebarItem(
                     icon: Icons.group,
                     label: 'المقاتلين',
-                    selected: false,
-                    onTap: () {},
+                    selected: selectedPage == 'fighters',
+                    onTap: () => _onSidebarItemTap('fighters'),
                   ),
                   const SizedBox(height: 8),
                   _SidebarItem(
                     icon: Icons.qr_code,
                     label: 'الدوام',
-                    selected: true,
-                    onTap: () {},
+                    selected: selectedPage == 'dashboard',
+                    onTap: () => _onSidebarItemTap('dashboard'),
                   ),
                   const SizedBox(height: 8),
                   _SidebarItem(
@@ -249,200 +457,9 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: Row(
-                  children: [
-                    // QR Scanner Panel
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF23262B),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                              'ماسح رمز QR',
-                              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.right,
-                            ),
-                            const SizedBox(height: 16),
-                            Expanded(
-                              child: Center(
-                                child: AspectRatio(
-                                  aspectRatio: 1,
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      StreamBuilder<QRResult>(
-                                        stream: _backendService.resultStream,
-                                        builder: (context, snapshot) {
-                                          if (snapshot.hasData && snapshot.data != null) {
-                                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                                              _onQRDetected(snapshot.data!);
-                                            });
-                                          }
-                                          return CameraPreviewWidget(
-                                            cameraService: _cameraService,
-                                            onFrameCaptured: _handleFrameCaptured,
-                                          );
-                                        },
-                                      ),
-                                      if (_errorMessage != null)
-                                        Center(
-                                          child: Container(
-                                            padding: const EdgeInsets.all(16),
-                                            color: Colors.black54,
-                                            child: Text(
-                                              _errorMessage!,
-                                              style: const TextStyle(color: Colors.white),
-                                            ),
-                                          ),
-                                        ),
-                                      if (_showSuccessAnimation)
-                                        Positioned.fill(
-                                          child: Container(
-                                            color: Colors.green.withOpacity(0.3),
-                                            child: const Center(
-                                              child: Icon(
-                                                Icons.check_circle,
-                                                color: Colors.white,
-                                                size: 100,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 24),
-                    // Manual Entry Panel
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF23262B),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            const Text(
-                              'إدخال يدوي',
-                              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
-                              textAlign: TextAlign.right,
-                            ),
-                            const SizedBox(height: 16),
-                            TextField(
-                              controller: _numberController,
-                              decoration: InputDecoration(
-                                labelText: 'رقم المقاتل',
-                                labelStyle: const TextStyle(color: Colors.white70),
-                                filled: true,
-                                fillColor: const Color(0xFF181B20),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.right,
-                            ),
-                            const SizedBox(height: 16),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: _dateController,
-                                    readOnly: true,
-                                    decoration: InputDecoration(
-                                      labelText: 'التاريخ',
-                                      labelStyle: const TextStyle(color: Colors.white70),
-                                      filled: true,
-                                      fillColor: const Color(0xFF181B20),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                    ),
-                                    style: const TextStyle(color: Colors.white),
-                                    textAlign: TextAlign.right,
-                                    onTap: _pickDate,
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: TextField(
-                                    controller: _timeController,
-                                    readOnly: true,
-                                    decoration: InputDecoration(
-                                      labelText: 'الوقت',
-                                      labelStyle: const TextStyle(color: Colors.white70),
-                                      filled: true,
-                                      fillColor: const Color(0xFF181B20),
-                                      border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                                    ),
-                                    style: const TextStyle(color: Colors.white),
-                                    textAlign: TextAlign.right,
-                                    onTap: _pickTime,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            TextField(
-                              controller: _notesController,
-                              maxLines: 2,
-                              decoration: InputDecoration(
-                                labelText: 'ملاحظات',
-                                labelStyle: const TextStyle(color: Colors.white70),
-                                filled: true,
-                                fillColor: const Color(0xFF181B20),
-                                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              style: const TextStyle(color: Colors.white),
-                              textAlign: TextAlign.right,
-                            ),
-                            const Spacer(),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF90B4FF),
-                                      foregroundColor: Colors.black,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    ),
-                                    icon: const Icon(Icons.login),
-                                    label: const Text('تسجيل حضور يدوي'),
-                                    onPressed: () {},
-                                  ),
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF90B4FF),
-                                      foregroundColor: Colors.black,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                    ),
-                                    icon: const Icon(Icons.logout),
-                                    label: const Text('تسجيل انصراف يدوي'),
-                                    onPressed: () {},
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                child: selectedPage == 'fighters'
+                    ? const FightersScreen()
+                    : _buildDashboardContent(),
               ),
             ),
           ],

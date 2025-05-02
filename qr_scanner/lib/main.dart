@@ -11,6 +11,7 @@ import 'screens/home_screen.dart';
 import 'services/camera_service.dart';
 import 'services/app_lifecycle_service.dart';
 import 'services/backend_service.dart';
+import 'services/database_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 
 void initializeWindowsCamera() {
@@ -153,6 +154,10 @@ void main() async {
   // Create and initialize backend service
   final backendService = BackendService();
   
+  // Initialize database service
+  final databaseService = DatabaseService.instance;
+  await databaseService.database; // This will create the database if it doesn't exist
+  
   // Start Python backend server
   final pythonProcess = await startPythonBackend();
   if (pythonProcess == null) {
@@ -173,6 +178,8 @@ void main() async {
       await backendService.disconnect();
       pythonProcess.kill();
     }
+    // Close the database connection
+    await databaseService.close();
   };
   
   runApp(
@@ -180,6 +187,7 @@ void main() async {
       providers: [
         ChangeNotifierProvider(create: (_) => CameraService()),
         ChangeNotifierProvider(create: (_) => backendService),
+        Provider<DatabaseService>(create: (_) => databaseService),
       ],
       child: const MyApp(),
     ),
