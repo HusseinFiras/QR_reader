@@ -11,6 +11,7 @@ import 'screens/home_screen.dart';
 import 'services/camera_service.dart';
 import 'services/app_lifecycle_service.dart';
 import 'services/backend_service.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void initializeWindowsCamera() {
   if (defaultTargetPlatform == TargetPlatform.windows) {
@@ -196,6 +197,15 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('ar'),
+        Locale('en'),
+      ],
       home: const HomeScreen(),
     );
   }
