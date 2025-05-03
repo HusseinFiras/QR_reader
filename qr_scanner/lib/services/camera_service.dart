@@ -16,8 +16,10 @@ class CameraService with ChangeNotifier {
   bool _isInitialized = false;
   bool _isStreaming = false;
   bool _isDisposing = false;
+  bool _isStarting = false;
   Timer? _captureTimer;
-  final StreamController<Uint8List> _frameStreamController = StreamController<Uint8List>();
+  final StreamController<Uint8List> _frameStreamController = StreamController<Uint8List>.broadcast();
+  Completer<void>? _initializationCompleter;
 
   Stream<Uint8List> get frameStream => _frameStreamController.stream;
   bool get isInitialized => _isInitialized;
@@ -25,9 +27,38 @@ class CameraService with ChangeNotifier {
   List<CameraDescription> get cameras => _cameras;
   CameraController? get controller => _controller;
 
+  Future<void> _waitForInitialization() async {
+    if (_initializationCompleter != null && !_initializationCompleter!.isCompleted) {
+      debugPrint('CameraService: Waiting for ongoing initialization...');
+      try {
+        await _initializationCompleter!.future;
+      } catch (e) {
+        debugPrint('CameraService: Error during waiting: $e');
+      }
+    }
+  }
+
   Future<void> initialize() async {
     debugPrint('CameraService: Initializing camera service...');
     try {
+      if (_isInitialized) {
+        debugPrint('CameraService: Already initialized, skipping...');
+        return;
+      }
+
+      await _waitForInitialization();
+
+      if (_isStarting) {
+        debugPrint('CameraService: Initialization already in progress, waiting...');
+        return;
+      }
+
+      _isStarting = true;
+      _initializationCompleter = Completer<void>();
+      
+      // Ensure proper cleanup before initialization
+      await cleanupCamera();
+      
       // Register the Windows camera plugin
       debugPrint('CameraService: Registering Windows camera plugin...');
       CameraPlatform.instance = CameraWindows();
@@ -40,17 +71,26 @@ class CameraService with ChangeNotifier {
         debugPrint('CameraService: No cameras available');
         throw Exception('No cameras available');
       }
+      
       _isInitialized = true;
+      _isStarting = false;
+      _initializationCompleter?.complete();
       notifyListeners();
       debugPrint('CameraService: Initialization successful');
     } on PlatformException catch (e) {
       debugPrint('CameraService: PlatformException during initialization: ${e.message}');
       _isInitialized = false;
+      _isStarting = false;
+      _initializationCompleter?.completeError(e);
       throw Exception('Failed to initialize camera: ${e.message}');
     } catch (e) {
       debugPrint('CameraService: Error during initialization: $e');
       _isInitialized = false;
+      _isStarting = false;
+      _initializationCompleter?.completeError(e);
       rethrow;
+    } finally {
+      _initializationCompleter = null;
     }
   }
 
@@ -61,8 +101,18 @@ class CameraService with ChangeNotifier {
       throw Exception('Camera not initialized or invalid index');
     }
 
+    await _waitForInitialization();
+
+    if (_isStarting) {
+      debugPrint('CameraService: Camera start already in progress, waiting...');
+      return;
+    }
+
+    _isStarting = true;
+    _initializationCompleter = Completer<void>();
+
     try {
-      debugPrint('CameraService: Cleaning up existing camera...');
+      // Ensure proper cleanup before starting new camera
       await cleanupCamera();
       
       debugPrint('CameraService: Creating new camera controller...');
@@ -75,16 +125,25 @@ class CameraService with ChangeNotifier {
 
       debugPrint('CameraService: Initializing camera controller...');
       await _controller!.initialize();
+      
+      _isStarting = false;
+      _initializationCompleter?.complete();
       notifyListeners();
       debugPrint('CameraService: Camera started successfully');
     } on CameraException catch (e) {
       debugPrint('CameraService: CameraException during start: ${e.description}');
-      _controller = null;
+      await cleanupCamera();
+      _isStarting = false;
+      _initializationCompleter?.completeError(e);
       throw Exception('Failed to start camera: ${e.description}');
     } catch (e) {
       debugPrint('CameraService: Error during camera start: $e');
-      _controller = null;
+      await cleanupCamera();
+      _isStarting = false;
+      _initializationCompleter?.completeError(e);
       rethrow;
+    } finally {
+      _initializationCompleter = null;
     }
   }
 
@@ -112,7 +171,9 @@ class CameraService with ChangeNotifier {
             final image = await _controller!.takePicture();
             final bytes = await image.readAsBytes();
             debugPrint('CameraService: Frame captured, size: ${bytes.length} bytes');
+            if (_frameStreamController.hasListener) {
             _frameStreamController.add(bytes);
+            }
           } catch (e) {
             debugPrint('CameraService: Error capturing frame: $e');
           }
@@ -123,8 +184,10 @@ class CameraService with ChangeNotifier {
         debugPrint('CameraService: Using mobile streaming implementation');
         _isStreaming = true;
         _controller!.startImageStream((image) {
+          if (_frameStreamController.hasListener) {
           final bytes = image.planes[0].bytes;
           _frameStreamController.add(bytes);
+          }
         });
       } else {
         debugPrint('CameraService: Unsupported platform: $defaultTargetPlatform');
@@ -147,6 +210,11 @@ class CameraService with ChangeNotifier {
       debugPrint('CameraService: Stopping Windows capture timer');
       _captureTimer!.cancel();
       _captureTimer = null;
+    }
+    
+    if (defaultTargetPlatform == TargetPlatform.android || 
+        defaultTargetPlatform == TargetPlatform.iOS) {
+      _controller?.stopImageStream();
     }
     
     notifyListeners();
@@ -173,6 +241,7 @@ class CameraService with ChangeNotifier {
         }
         _controller = null;
       }
+      
       _isInitialized = false;
       notifyListeners();
       debugPrint('CameraService: Cleanup completed successfully');

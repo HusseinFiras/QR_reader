@@ -42,6 +42,14 @@ class _HomeScreenState extends State<HomeScreen> {
     _initializeServices();
   }
 
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (selectedPage == 'dashboard') {
+      _initializeServices();
+    }
+  }
+
   Future<void> _initializeServices() async {
     debugPrint('HomeScreen: Initializing services...');
     try {
@@ -58,10 +66,11 @@ class _HomeScreenState extends State<HomeScreen> {
       // Then initialize camera
       debugPrint('HomeScreen: Initializing camera...');
       await _cameraService.initialize();
+      await Future.delayed(const Duration(milliseconds: 500)); // Add small delay
       await _cameraService.startCamera(0);
       debugPrint('HomeScreen: Camera initialized successfully');
       
-      if (mounted) {
+      if (mounted && selectedPage == 'dashboard') {
         debugPrint('HomeScreen: Starting camera stream...');
         _cameraService.startStreaming();
         debugPrint('HomeScreen: Camera stream started successfully');
@@ -97,9 +106,11 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     debugPrint('HomeScreen: Disposing...');
+    if (selectedPage == 'dashboard') {
     _cameraService.stopStreaming();
     _cameraService.dispose();
     _backendService.disconnect();
+    }
     _numberController.dispose();
     _dateController.dispose();
     _timeController.dispose();
@@ -186,10 +197,19 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
-  // Remove _navigateToFighters and use this instead
   void _onSidebarItemTap(String page) {
+    if (page == selectedPage) return;
+    
     setState(() {
+      if (selectedPage == 'dashboard') {
+        // Stop camera when leaving dashboard
+        _cameraService.stopStreaming();
+      }
       selectedPage = page;
+      if (page == 'dashboard') {
+        // Initialize camera when returning to dashboard
+        _initializeServices();
+      }
     });
   }
 

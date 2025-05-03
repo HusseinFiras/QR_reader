@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../services/database_service.dart';
+import '../services/qr_service.dart';
 import 'package:flutter/services.dart';
+import 'dart:io';
 
 class FightersScreen extends StatefulWidget {
   const FightersScreen({Key? key}) : super(key: key);
@@ -216,7 +218,7 @@ class _FightersScreenState extends State<FightersScreen> {
                     }
                     try {
                       final databaseService = Provider.of<DatabaseService>(context, listen: false);
-                      await databaseService.insertFighter({
+                      final fighterId = await databaseService.insertFighter({
                         'name': _nameController.text,
                         'number': _numberController.text,
                         'department': _selectedDepartment,
@@ -224,6 +226,18 @@ class _FightersScreenState extends State<FightersScreen> {
                         'qr_image_path': '',
                         'status': _isActive ? DatabaseService.statusActive : DatabaseService.statusInactive,
                       });
+                      
+                      // Generate and save QR code
+                      final qrService = QRService();
+                      final qrImagePath = await qrService.generateAndSaveQRCode(fighterId.toString(), _nameController.text);
+                      
+                      // Update fighter with QR code information
+                      await databaseService.updateFighter({
+                        'id': fighterId,
+                        'qr_code': fighterId.toString(),
+                        'qr_image_path': qrImagePath,
+                      });
+                      
                       setState(() {});
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
@@ -268,7 +282,14 @@ class _FightersScreenState extends State<FightersScreen> {
     );
     if (confirm == true) {
       final databaseService = Provider.of<DatabaseService>(context, listen: false);
-      await databaseService.deleteFighter(id);
+      final fighter = await databaseService.getFighter(id);
+      if (fighter != null) {
+        // Delete QR code image
+        final qrService = QRService();
+        await qrService.deleteQRCode(fighter['name']);
+        // Delete fighter from database
+        await databaseService.deleteFighter(id);
+      }
       setState(() {});
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تم حذف المقاتل')));
     }
@@ -281,6 +302,49 @@ class _FightersScreenState extends State<FightersScreen> {
         : DatabaseService.statusActive;
     await databaseService.updateFighterStatus(id, newStatus);
     setState(() {});
+  }
+
+  Future<void> _showQRCodeDialog(String fighterId, String fighterName, String qrImagePath) async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF23262B),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text('رمز ال QR للمقاتل : $fighterName', style: const TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Image.file(
+              File(qrImagePath),
+              width: 200,
+              height: 200,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF90B4FF),
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              onPressed: () async {
+                // Copy QR code path to clipboard
+                await Clipboard.setData(ClipboardData(text: qrImagePath));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('تم نسخ مسار ملف QR')),
+                );
+              },
+              child: const Text('نسخ مسار الملف'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق', style: TextStyle(color: Colors.white70)),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -387,6 +451,16 @@ class _FightersScreenState extends State<FightersScreen> {
                                 ),
                               ),
                               const SizedBox(width: 16),
+                              // QR Code button
+                              IconButton(
+                                icon: const Icon(Icons.qr_code, color: Color(0xFF90B4FF)),
+                                tooltip: 'عرض رمز QR',
+                                onPressed: () => _showQRCodeDialog(
+                                  fighter['id'].toString(),
+                                  fighter['name'],
+                                  fighter['qr_image_path'],
+                                ),
+                              ),
                               // Status Switch
                               Column(
                                 children: [
