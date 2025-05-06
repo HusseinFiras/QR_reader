@@ -222,39 +222,185 @@ class MyApp extends StatelessWidget {
           secondary: const Color(0xFF90A783), // Lighter army green
           background: Colors.white,
           surface: Colors.white,
+          onPrimary: Colors.white,
+          onSecondary: Colors.white,
+          onBackground: Colors.black87,
+          onSurface: Colors.black87,
+          primaryContainer: const Color(0xFFE8EDE5), // Super light army green for containers
         ),
+        useMaterial3: true,
+        fontFamily: 'NotoSansArabic',
         scaffoldBackgroundColor: Colors.white,
+        cardTheme: CardTheme(
+          elevation: 8,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shadowColor: Colors.black.withOpacity(0.1),
+          clipBehavior: Clip.antiAlias,
+        ),
         appBarTheme: const AppBarTheme(
           backgroundColor: Color(0xFF4D5D44),
           foregroundColor: Colors.white,
-          elevation: 1,
+          elevation: 0,
+          centerTitle: true,
+          titleTextStyle: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: const Color(0xFF4D5D44),
             foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            elevation: 4,
+            shadowColor: const Color(0xFF4D5D44).withOpacity(0.4),
+            textStyle: const TextStyle(
+              fontFamily: 'NotoSansArabic',
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
         textButtonTheme: TextButtonThemeData(
           style: TextButton.styleFrom(
             foregroundColor: const Color(0xFF4D5D44),
+            textStyle: const TextStyle(
+              fontFamily: 'NotoSansArabic',
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.grey[50],
-          labelStyle: const TextStyle(color: Color(0xFF4D5D44)),
+          labelStyle: const TextStyle(
+            color: Color(0xFF4D5D44),
+            fontFamily: 'NotoSansArabic',
+          ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
             borderSide: const BorderSide(color: Color(0xFF4D5D44), width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          alignLabelWithHint: true,
+          floatingLabelAlignment: FloatingLabelAlignment.start,
+          isCollapsed: false,
+        ),
+        iconTheme: const IconThemeData(
+          color: Color(0xFF4D5D44),
+        ),
+        dividerTheme: DividerThemeData(
+          color: Colors.grey.shade200,
+          thickness: 1,
+        ),
+        checkboxTheme: CheckboxThemeData(
+          fillColor: MaterialStateProperty.resolveWith<Color>((states) {
+            if (states.contains(MaterialState.selected)) {
+              return const Color(0xFF4D5D44);
+            }
+            return Colors.grey.shade400;
+          }),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+        ),
+        radioTheme: RadioThemeData(
+          fillColor: MaterialStateProperty.resolveWith<Color>((states) {
+            if (states.contains(MaterialState.selected)) {
+              return const Color(0xFF4D5D44);
+            }
+            return Colors.grey.shade400;
+          }),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: const Color(0xFFE8EDE5),
+          labelStyle: const TextStyle(color: Color(0xFF4D5D44)),
+          selectedColor: const Color(0xFF4D5D44),
+          secondarySelectedColor: const Color(0xFF4D5D44),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          secondaryLabelStyle: const TextStyle(color: Colors.white),
+        ),
+        textTheme: const TextTheme(
+          displayLarge: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+          displayMedium: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+          displaySmall: TextStyle(
+            fontFamily: 'NotoSansArabic', 
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+          headlineLarge: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87, 
+            fontWeight: FontWeight.bold,
+          ),
+          headlineMedium: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+          headlineSmall: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+          titleLarge: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+            fontWeight: FontWeight.bold,
+          ),
+          titleMedium: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+          titleSmall: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+          bodyLarge: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+          ),
+          bodyMedium: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+          ),
+          bodySmall: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black54,
+          ),
+          labelLarge: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+            fontWeight: FontWeight.w500,
+          ),
+          labelMedium: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black87,
+          ),
+          labelSmall: TextStyle(
+            fontFamily: 'NotoSansArabic',
+            color: Colors.black54,
           ),
         ),
       ),
@@ -267,6 +413,7 @@ class MyApp extends StatelessWidget {
         Locale('ar'),
         Locale('en'),
       ],
+      locale: const Locale('ar'),
       home: const HomeScreen(initialPage: 'attendance'),
     );
   }

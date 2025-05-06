@@ -392,58 +392,87 @@ class _FightersScreenState extends State<FightersScreen> {
                 future: Provider.of<DatabaseService>(context, listen: false).getAllFighters(),
                 builder: (context, snapshot) {
                   final total = snapshot.data?.length ?? 0;
-                  return Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: const Color(0xFFE0E0E0)),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.black.withOpacity(0.05),
-                                blurRadius: 5,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text('إجمالي المقاتلين', style: TextStyle(color: Color(0xFF4D5D44), fontSize: 16)),
-                                  const SizedBox(height: 8),
-                                  Text('$total', style: const TextStyle(color: Color(0xFF4D5D44), fontSize: 32, fontWeight: FontWeight.bold)),
-                                ],
-                              ),
-                              const Icon(Icons.groups, color: Color(0xFF4D5D44), size: 40),
-                            ],
-                          ),
-                        ),
+                  return Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          const Color(0xFF4D5D44),
+                          const Color(0xFF627953),
+                        ],
                       ),
-                    ],
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF4D5D44).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'إجمالي المقاتلين', 
+                              style: TextStyle(
+                                color: Colors.white, 
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              )
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '$total', 
+                              style: const TextStyle(
+                                color: Colors.white, 
+                                fontSize: 32, 
+                                fontWeight: FontWeight.bold
+                              )
+                            ),
+                          ],
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: const Icon(Icons.groups, color: Colors.white, size: 40),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),
               const SizedBox(height: 24),
               // Search Bar
               Container(
-                height: 48,
+                height: 56,
                 decoration: BoxDecoration(
                   color: Colors.grey[50],
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(12),
                   border: Border.all(color: const Color(0xFFE0E0E0)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 8,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: TextField(
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     hintText: 'بحث عن مقاتل...',
-                    prefixIcon: Icon(Icons.search, color: Color(0xFF4D5D44)),
+                    prefixIcon: Icon(Icons.search, color: const Color(0xFF4D5D44)),
                     border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                    hintStyle: TextStyle(color: Colors.grey[500]),
                   ),
                   textDirection: TextDirection.rtl,
                   textAlign: TextAlign.right,
@@ -454,7 +483,7 @@ class _FightersScreenState extends State<FightersScreen> {
                   },
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               // Fighters List
               Expanded(
                 child: FutureBuilder<List<Map<String, dynamic>>>(
@@ -476,10 +505,21 @@ class _FightersScreenState extends State<FightersScreen> {
                       );
                     }
                     if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(
-                        child: Text(
-                          'لا يوجد مقاتلين',
-                          style: TextStyle(color: Colors.black54, fontSize: 18),
+                      return Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.person_off,
+                              size: 80,
+                              color: Colors.grey[300],
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'لا يوجد مقاتلين',
+                              style: TextStyle(color: Colors.grey[500], fontSize: 18),
+                            ),
+                          ],
                         ),
                       );
                     }
@@ -498,12 +538,11 @@ class _FightersScreenState extends State<FightersScreen> {
                     return Container(
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: const Color(0xFFE0E0E0)),
+                        borderRadius: BorderRadius.circular(16),
                         boxShadow: [
                           BoxShadow(
                             color: Colors.black.withOpacity(0.05),
-                            blurRadius: 5,
+                            blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
                         ],
@@ -515,67 +554,177 @@ class _FightersScreenState extends State<FightersScreen> {
                           final isActive = fighter['status'] == DatabaseService.statusActive;
                           
                           return Container(
+                            margin: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                             decoration: BoxDecoration(
-                              border: Border(
-                                bottom: BorderSide(
-                                  color: Colors.grey.withOpacity(0.2),
-                                  width: 1,
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 6,
+                                  offset: const Offset(0, 2),
                                 ),
-                              ),
+                              ],
                             ),
-                            child: ListTile(
-                              leading: CircleAvatar(
-                                backgroundColor: isActive ? const Color(0xFF4D5D44) : Colors.red,
-                                child: Text(
-                                  fighter['name'].substring(0, 1),
-                                  style: const TextStyle(color: Colors.white),
-                                ),
-                              ),
-                              title: Directionality(
-                                textDirection: TextDirection.rtl,
-                                child: Text(
-                                  fighter['name'],
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black87,
+                            child: Material(
+                              color: Colors.transparent,
+                              borderRadius: BorderRadius.circular(12),
+                              child: InkWell(
+                                borderRadius: BorderRadius.circular(12),
+                                onTap: () => _showQRCode(fighter),
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                                  child: Row(
+                                    children: [
+                                      Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          gradient: LinearGradient(
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                            colors: isActive 
+                                                ? [const Color(0xFF4D5D44), const Color(0xFF627953)]
+                                                : [Colors.red.shade300, Colors.red.shade400],
+                                          ),
+                                          borderRadius: BorderRadius.circular(14),
+                                          boxShadow: [
+                                            BoxShadow(
+                                              color: isActive 
+                                                  ? const Color(0xFF4D5D44).withOpacity(0.3)
+                                                  : Colors.red.withOpacity(0.3),
+                                              blurRadius: 8,
+                                              offset: const Offset(0, 3),
+                                            ),
+                                          ],
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            fighter['name'].substring(0, 1),
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 24,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 16),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              fighter['name'],
+                                              style: const TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                                fontSize: 16,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.phone, 
+                                                  size: 14, 
+                                                  color: Colors.grey[500],
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  fighter['number'] ?? '-',
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Icon(
+                                                  Icons.badge, 
+                                                  size: 14, 
+                                                  color: Colors.grey[500],
+                                                ),
+                                                const SizedBox(width: 4),
+                                                Text(
+                                                  fighter['department'] ?? '-',
+                                                  style: TextStyle(
+                                                    color: Colors.grey[600],
+                                                    fontSize: 14,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 12),
+                                                Container(
+                                                  padding: EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                                  decoration: BoxDecoration(
+                                                    color: isActive 
+                                                        ? const Color(0xFF4D5D44).withOpacity(0.1)
+                                                        : Colors.red.withOpacity(0.1),
+                                                    borderRadius: BorderRadius.circular(10),
+                                                  ),
+                                                  child: Text(
+                                                    isActive ? 'فعال' : 'غير فعال',
+                                                    style: TextStyle(
+                                                      color: isActive 
+                                                          ? const Color(0xFF4D5D44)
+                                                          : Colors.red,
+                                                      fontSize: 12,
+                                                      fontWeight: FontWeight.w500,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          IconButton(
+                                            icon: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF4D5D44).withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: const Icon(Icons.qr_code, color: Color(0xFF4D5D44), size: 20),
+                                            ),
+                                            tooltip: 'عرض رمز QR',
+                                            onPressed: () => _showQRCode(fighter),
+                                          ),
+                                          IconButton(
+                                            icon: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: const Color(0xFF4D5D44).withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: const Icon(Icons.edit, color: Color(0xFF4D5D44), size: 20),
+                                            ),
+                                            tooltip: 'تعديل بيانات المقاتل',
+                                            onPressed: () => _showEditFighterDialog(fighter),
+                                          ),
+                                          IconButton(
+                                            icon: Container(
+                                              padding: const EdgeInsets.all(6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.red.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(8),
+                                              ),
+                                              child: const Icon(Icons.delete, color: Colors.red, size: 20),
+                                            ),
+                                            tooltip: 'حذف المقاتل',
+                                            onPressed: () => _confirmDeleteFighter(fighter),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                              subtitle: Directionality(
-                                textDirection: TextDirection.rtl,
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'رقم الهاتف: ${fighter['number']}',
-                                      style: const TextStyle(color: Colors.black54),
-                                    ),
-                                    Text(
-                                      'القسم: ${fighter['department'] ?? '-'}',
-                                      style: const TextStyle(color: Colors.black54),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              trailing: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.qr_code, color: Color(0xFF4D5D44)),
-                                    tooltip: 'عرض رمز QR',
-                                    onPressed: () => _showQRCode(fighter),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.edit, color: Color(0xFF4D5D44)),
-                                    tooltip: 'تعديل بيانات المقاتل',
-                                    onPressed: () => _showEditFighterDialog(fighter),
-                                  ),
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
-                                    tooltip: 'حذف المقاتل',
-                                    onPressed: () => _confirmDeleteFighter(fighter),
-                                  ),
-                                ],
                               ),
                             ),
                           );
