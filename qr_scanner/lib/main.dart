@@ -151,6 +151,19 @@ void main() async {
   final appLifecycleService = AppLifecycleService();
   appLifecycleService.initialize();
   
+  // Set up database directory - store in an easily accessible location
+  final appDir = Directory.current.path;
+  final dbDir = path.join(appDir, 'database');
+  
+  // Create the database directory if it doesn't exist
+  final dbDirObj = Directory(dbDir);
+  if (!dbDirObj.existsSync()) {
+    dbDirObj.createSync(recursive: true);
+  }
+  
+  debugPrint('Setting database directory to: $dbDir');
+  DatabaseService.setCustomDatabaseDirectory(dbDir);
+  
   // Create and initialize backend service
   final backendService = BackendService();
   
@@ -200,10 +213,50 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: false,
       title: 'QR Scanner',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
-        visualDensity: VisualDensity.adaptivePlatformDensity,
+        primaryColor: const Color(0xFF4D5D44), // Army green
+        colorScheme: ColorScheme.light(
+          primary: const Color(0xFF4D5D44),
+          secondary: const Color(0xFF90A783), // Lighter army green
+          background: Colors.white,
+          surface: Colors.white,
+        ),
+        scaffoldBackgroundColor: Colors.white,
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xFF4D5D44),
+          foregroundColor: Colors.white,
+          elevation: 1,
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF4D5D44),
+            foregroundColor: Colors.white,
+          ),
+        ),
+        textButtonTheme: TextButtonThemeData(
+          style: TextButton.styleFrom(
+            foregroundColor: const Color(0xFF4D5D44),
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: Colors.grey[50],
+          labelStyle: const TextStyle(color: Color(0xFF4D5D44)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: const BorderSide(color: Color(0xFF4D5D44), width: 2),
+          ),
+        ),
       ),
       localizationsDelegates: const [
         GlobalMaterialLocalizations.delegate,
@@ -214,7 +267,7 @@ class MyApp extends StatelessWidget {
         Locale('ar'),
         Locale('en'),
       ],
-      home: const HomeScreen(),
+      home: const HomeScreen(initialPage: 'attendance'),
     );
   }
 }

@@ -20,6 +20,7 @@ class CameraService with ChangeNotifier {
   Timer? _captureTimer;
   final StreamController<Uint8List> _frameStreamController = StreamController<Uint8List>.broadcast();
   Completer<void>? _initializationCompleter;
+  int _consecutiveErrors = 0;
 
   Stream<Uint8List> get frameStream => _frameStreamController.stream;
   bool get isInitialized => _isInitialized;
@@ -59,18 +60,33 @@ class CameraService with ChangeNotifier {
       // Ensure proper cleanup before initialization
       await cleanupCamera();
       
+      // Create a timeout for the entire initialization process
+      final timeoutFuture = Future.delayed(const Duration(seconds: 10), () {
+        if (_initializationCompleter != null && !_initializationCompleter!.isCompleted) {
+          debugPrint('CameraService: Initialization timed out after 10 seconds');
+          return Future.error('Camera initialization timed out');
+        }
+      });
+      
       // Register the Windows camera plugin
       debugPrint('CameraService: Registering Windows camera plugin...');
       CameraPlatform.instance = CameraWindows();
       
       debugPrint('CameraService: Getting available cameras...');
-      _cameras = await CameraPlatform.instance.availableCameras();
-      debugPrint('CameraService: Found ${_cameras.length} cameras');
       
-      if (_cameras.isEmpty) {
-        debugPrint('CameraService: No cameras available');
-        throw Exception('No cameras available');
-      }
+      // Use a race between the timeout and the actual operation
+      await Future.any([
+        timeoutFuture,
+        Future(() async {
+          _cameras = await CameraPlatform.instance.availableCameras();
+          debugPrint('CameraService: Found ${_cameras.length} cameras');
+          
+          if (_cameras.isEmpty) {
+            debugPrint('CameraService: No cameras available');
+            throw Exception('No cameras available');
+          }
+        })
+      ]);
       
       _isInitialized = true;
       _isStarting = false;
@@ -116,12 +132,40 @@ class CameraService with ChangeNotifier {
       await cleanupCamera();
       
       debugPrint('CameraService: Creating new camera controller...');
-      _controller = CameraController(
-        _cameras[cameraIndex],
-        ResolutionPreset.high,
-        enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.bgra8888, // Essential for Windows
-      );
+      
+      // Wrap camera creation in a try-catch to handle resource conflict
+      try {
+        _controller = CameraController(
+          _cameras[cameraIndex],
+          ResolutionPreset.high,
+          enableAudio: false,
+          imageFormatGroup: ImageFormatGroup.bgra8888, // Essential for Windows
+        );
+      } catch (e) {
+        debugPrint('CameraService: Error creating controller: $e');
+        if (e.toString().contains('Camera with given device id already exists')) {
+          // If we hit this error, perform forced cleanup and retry once
+          await _forceCleanupCamera();
+          
+          // Re-initialize after forced cleanup
+          await initialize();
+          
+          // Retry camera creation after forced cleanup
+          if (cameraIndex < _cameras.length) {
+            _controller = CameraController(
+              _cameras[cameraIndex],
+              ResolutionPreset.high,
+              enableAudio: false,
+              imageFormatGroup: ImageFormatGroup.bgra8888,
+            );
+          } else {
+            throw Exception('Camera index out of range after reinitialization');
+          }
+        } else {
+          // For other errors, just rethrow
+          rethrow;
+        }
+      }
 
       debugPrint('CameraService: Initializing camera controller...');
       await _controller!.initialize();
@@ -167,15 +211,30 @@ class CameraService with ChangeNotifier {
           }
           
           try {
+            // Check if controller is still initialized
+            if (!_controller!.value.isInitialized) {
+              debugPrint('CameraService: Controller no longer initialized, attempting to fix...');
+              await _attemptCameraRecovery();
+              return;
+            }
+            
             debugPrint('CameraService: Capturing frame...');
             final image = await _controller!.takePicture();
             final bytes = await image.readAsBytes();
             debugPrint('CameraService: Frame captured, size: ${bytes.length} bytes');
             if (_frameStreamController.hasListener) {
-            _frameStreamController.add(bytes);
+              _frameStreamController.add(bytes);
             }
+            // Reset consecutive errors on successful frame capture
+            _consecutiveErrors = 0;
           } catch (e) {
             debugPrint('CameraService: Error capturing frame: $e');
+            // If we hit consistent errors, try to recover the camera
+            _consecutiveErrors++;
+            if (_consecutiveErrors > 3) {
+              _consecutiveErrors = 0;
+              _attemptCameraRecovery();
+            }
           }
         });
         debugPrint('CameraService: Windows capture timer started');
@@ -264,5 +323,73 @@ class CameraService with ChangeNotifier {
       debugPrint('CameraService: Error during disposal: $e');
       throw Exception('Failed to dispose camera: $e');
     }
+  }
+
+  Future<void> _attemptCameraRecovery() async {
+    debugPrint('CameraService: Attempting to recover camera...');
+    // Stop streaming first
+    stopStreaming();
+    
+    try {
+      // Clean up existing camera controller
+      await cleanupCamera();
+      
+      // Small delay to ensure resources are released
+      await Future.delayed(const Duration(milliseconds: 1000));
+      
+      // Try to initialize again
+      await initialize();
+      
+      // If we have cameras, try to start the first one
+      if (_cameras.isNotEmpty) {
+        await startCamera(0);
+        
+        // Start streaming again
+        startStreaming();
+        
+        debugPrint('CameraService: Camera recovery successful');
+      } else {
+        debugPrint('CameraService: No cameras available after recovery attempt');
+      }
+    } catch (e) {
+      debugPrint('CameraService: Camera recovery failed: $e');
+      // Reset the error counter to prevent continuous recovery attempts
+      _consecutiveErrors = 0;
+      
+      // If we get the "Camera already exists" error, try a more aggressive cleanup
+      if (e.toString().contains('Camera with given device id already exists')) {
+        debugPrint('CameraService: Detected camera resource conflict, attempting deeper cleanup');
+        await _forceCleanupCamera();
+      }
+    }
+  }
+  
+  Future<void> _forceCleanupCamera() async {
+    debugPrint('CameraService: Performing forced camera cleanup');
+    // Set all state variables to initial values
+    _isInitialized = false;
+    _isStreaming = false;
+    _isDisposing = false;
+    _isStarting = false;
+    _consecutiveErrors = 0;
+    
+    // Cancel any active timers
+    _captureTimer?.cancel();
+    _captureTimer = null;
+    
+    // Nullify controller reference without calling dispose
+    // (since the error indicates it's already disposed elsewhere)
+    _controller = null;
+    
+    // Reset camera list
+    _cameras = [];
+    
+    // Notify any listeners
+    notifyListeners();
+    
+    // Wait longer to ensure system resources are freed
+    await Future.delayed(const Duration(seconds: 2));
+    
+    debugPrint('CameraService: Forced cleanup complete');
   }
 } 

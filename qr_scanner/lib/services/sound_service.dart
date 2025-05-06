@@ -21,6 +21,16 @@ class SoundService extends ChangeNotifier {
       }
     }
   }
+  
+  Future<void> playErrorSound() async {
+    if (!_isMuted) {
+      try {
+        await _player.play(AssetSource('sounds/Boop.mp3'));
+      } catch (e) {
+        debugPrint('Error playing sound: $e');
+      }
+    }
+  }
 
   void toggleMute() {
     _isMuted = !_isMuted;

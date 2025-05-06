@@ -22,16 +22,32 @@ class CameraPreviewWidget extends StatefulWidget {
 class _CameraPreviewWidgetState extends State<CameraPreviewWidget> {
   Uint8List? _lastFrame;
   StreamSubscription<Uint8List>? _frameSubscription;
+  bool _noFramesReceived = false;
+  Timer? _frameCheckTimer;
 
   @override
   void initState() {
     super.initState();
+    _setupFrameSubscription();
+    
+    // Start a timer to check if we're receiving frames
+    _frameCheckTimer = Timer(const Duration(seconds: 3), () {
+      if (_lastFrame == null && mounted) {
+        setState(() {
+          _noFramesReceived = true;
+        });
+      }
+    });
+  }
+  
+  void _setupFrameSubscription() {
     if (defaultTargetPlatform == TargetPlatform.windows) {
       // Listen to frame stream for Windows
       _frameSubscription = widget.cameraService.frameStream.listen((frame) {
         if (!mounted) return;
         setState(() {
           _lastFrame = frame;
+          _noFramesReceived = false;
         });
         widget.onFrameCaptured(frame);
       });
@@ -47,6 +63,41 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> {
 
     if (defaultTargetPlatform == TargetPlatform.windows) {
       if (_lastFrame == null) {
+        if (_noFramesReceived) {
+          // If the camera is initialized but we're not getting frames, offer a restart button
+          return Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Waiting for camera frame...'),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    // Restart the camera stream
+                    widget.cameraService.stopStreaming();
+                    Future.delayed(const Duration(milliseconds: 500), () {
+                      widget.cameraService.startStreaming();
+                      setState(() {
+                        _noFramesReceived = false;
+                      });
+                      
+                      // Cancel existing timer and start a new one
+                      _frameCheckTimer?.cancel();
+                      _frameCheckTimer = Timer(const Duration(seconds: 3), () {
+                        if (_lastFrame == null && mounted) {
+                          setState(() {
+                            _noFramesReceived = true;
+                          });
+                        }
+                      });
+                    });
+                  },
+                  child: const Text('Restart Camera'),
+                ),
+              ],
+            ),
+          );
+        }
         return const Center(child: Text('Waiting for camera frame...'));
       }
       return AspectRatio(
@@ -74,6 +125,7 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget> {
   @override
   void dispose() {
     _frameSubscription?.cancel();
+    _frameCheckTimer?.cancel();
     super.dispose();
   }
 } 

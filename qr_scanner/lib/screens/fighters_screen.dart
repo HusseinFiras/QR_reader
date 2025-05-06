@@ -19,6 +19,7 @@ class _FightersScreenState extends State<FightersScreen> {
   final TextEditingController _newDepartmentController = TextEditingController();
   bool _isActive = true;
   List<String> _departments = [];
+  String _searchText = '';
 
   Future<void> _loadDepartments() async {
     final databaseService = Provider.of<DatabaseService>(context, listen: false);
@@ -40,9 +41,9 @@ class _FightersScreenState extends State<FightersScreen> {
         return StatefulBuilder(
           builder: (context, setStateDialog) {
             return AlertDialog(
-              backgroundColor: const Color(0xFF23262B),
+              backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-              title: const Text('إضافة مقاتل', textDirection: TextDirection.rtl, style: TextStyle(color: Colors.white)),
+              title: const Text('إضافة مقاتل', textDirection: TextDirection.rtl, style: TextStyle(color: Color(0xFF4D5D44))),
               content: SizedBox(
                 width: 350,
                 child: Column(
@@ -51,27 +52,35 @@ class _FightersScreenState extends State<FightersScreen> {
                     TextField(
                       controller: _nameController,
                       decoration: const InputDecoration(
-                        labelText: 'الاسم',
+                        labelText: 'اسم المقاتل',
                         border: OutlineInputBorder(),
                         alignLabelWithHint: true,
+                        labelStyle: TextStyle(color: Color(0xFF4D5D44)),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4D5D44), width: 2),
+                        ),
                       ),
                       textDirection: TextDirection.rtl,
                       textAlign: TextAlign.right,
-                      style: const TextStyle(color: Colors.white),
-                      cursorColor: Colors.white,
+                      style: const TextStyle(color: Colors.black87),
+                      cursorColor: const Color(0xFF4D5D44),
                     ),
                     const SizedBox(height: 16),
                     TextField(
                       controller: _numberController,
                       decoration: const InputDecoration(
-                        labelText: 'الرقم',
+                        labelText: 'رقم الهاتف',
                         border: OutlineInputBorder(),
                         alignLabelWithHint: true,
+                        labelStyle: TextStyle(color: Color(0xFF4D5D44)),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4D5D44), width: 2),
+                        ),
                       ),
                       textDirection: TextDirection.rtl,
                       textAlign: TextAlign.right,
-                      style: const TextStyle(color: Colors.white),
-                      cursorColor: Colors.white,
+                      style: const TextStyle(color: Colors.black87),
+                      cursorColor: const Color(0xFF4D5D44),
                       keyboardType: TextInputType.number,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
@@ -83,9 +92,13 @@ class _FightersScreenState extends State<FightersScreen> {
                       value: _selectedDepartment,
                       isExpanded: true,
                       decoration: const InputDecoration(
-                        labelText: 'القسم',
+                        labelText: 'القسم او الفوج',
                         border: OutlineInputBorder(),
                         alignLabelWithHint: true,
+                        labelStyle: TextStyle(color: Color(0xFF4D5D44)),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4D5D44), width: 2),
+                        ),
                       ),
                       items: [
                         ..._departments.map((dep) => DropdownMenuItem(
@@ -96,9 +109,9 @@ class _FightersScreenState extends State<FightersScreen> {
                           value: '__add_new__',
                           child: Row(
                             children: const [
-                              Icon(Icons.add, color: Colors.blue),
+                              Icon(Icons.add, color: Color(0xFF4D5D44)),
                               SizedBox(width: 8),
-                              Text('إضافة قسم جديد', style: TextStyle(color: Colors.blue)),
+                              Text('إضافة قسم جديد', style: TextStyle(color: Color(0xFF4D5D44))),
                             ],
                           ),
                         ),
@@ -109,30 +122,34 @@ class _FightersScreenState extends State<FightersScreen> {
                           final newDep = await showDialog<String>(
                             context: context,
                             builder: (context) => AlertDialog(
-                              backgroundColor: const Color(0xFF23262B),
+                              backgroundColor: Colors.white,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              title: const Text('إضافة قسم جديد', style: TextStyle(color: Colors.white)),
+                              title: const Text('إضافة قسم جديد', style: TextStyle(color: Color(0xFF4D5D44))),
                               content: TextField(
                                 controller: _newDepartmentController,
                                 decoration: const InputDecoration(
                                   labelText: 'القسم',
                                   border: OutlineInputBorder(),
                                   alignLabelWithHint: true,
+                                  labelStyle: TextStyle(color: Color(0xFF4D5D44)),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Color(0xFF4D5D44), width: 2),
+                                  ),
                                 ),
                                 textDirection: TextDirection.rtl,
                                 textAlign: TextAlign.right,
-                                style: const TextStyle(color: Colors.white),
-                                cursorColor: Colors.white,
+                                style: const TextStyle(color: Colors.black87),
+                                cursorColor: const Color(0xFF4D5D44),
                               ),
                               actions: [
                                 TextButton(
                                   onPressed: () => Navigator.pop(context),
-                                  child: const Text('إلغاء', style: TextStyle(color: Colors.white70)),
+                                  child: const Text('إلغاء', style: TextStyle(color: Color(0xFF4D5D44))),
                                 ),
                                 ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: const Color(0xFF90B4FF),
-                                    foregroundColor: Colors.black,
+                                    backgroundColor: const Color(0xFF4D5D44),
+                                    foregroundColor: Colors.white,
                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                   ),
                                   onPressed: () {
@@ -157,9 +174,9 @@ class _FightersScreenState extends State<FightersScreen> {
                           });
                         }
                       },
-                      style: const TextStyle(color: Colors.white),
-                      dropdownColor: const Color(0xFF23262B),
-                      iconEnabledColor: Colors.white,
+                      style: const TextStyle(color: Colors.black87),
+                      dropdownColor: Colors.white,
+                      iconEnabledColor: const Color(0xFF4D5D44),
                     ),
                     const SizedBox(height: 16),
                     Directionality(
@@ -167,12 +184,12 @@ class _FightersScreenState extends State<FightersScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
-                          const Text('الحالة:', style: TextStyle(color: Colors.white)),
+                          const Text('الحالة:', style: TextStyle(color: Color(0xFF4D5D44))),
                           const SizedBox(width: 8),
-                          Text(_isActive ? 'فعال' : 'غير فعال', style: const TextStyle(color: Colors.white)),
+                          Text(_isActive ? 'فعال' : 'غير فعال', style: const TextStyle(color: Colors.black87)),
                           Switch(
                             value: _isActive,
-                            activeColor: Colors.green,
+                            activeColor: const Color(0xFF4D5D44),
                             inactiveThumbColor: Colors.red,
                             onChanged: (val) {
                               setStateDialog(() {
@@ -189,12 +206,12 @@ class _FightersScreenState extends State<FightersScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text('إلغاء', style: TextStyle(color: Colors.white70)),
+                  child: const Text('إلغاء', style: TextStyle(color: Color(0xFF4D5D44))),
                 ),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF90B4FF),
-                    foregroundColor: Colors.black,
+                    backgroundColor: const Color(0xFF4D5D44),
+                    foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                   ),
                   onPressed: () async {
@@ -263,14 +280,14 @@ class _FightersScreenState extends State<FightersScreen> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: const Color(0xFF23262B),
+        backgroundColor: Colors.white,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text('تأكيد الحذف', style: TextStyle(color: Colors.white)),
-        content: const Text('هل أنت متأكد أنك تريد حذف هذا المقاتل؟', style: TextStyle(color: Colors.white70)),
+        title: const Text('تأكيد الحذف', style: TextStyle(color: Color(0xFF4D5D44), fontWeight: FontWeight.bold)),
+        content: const Text('هل أنت متأكد أنك تريد حذف هذا المقاتل؟', style: TextStyle(color: Colors.black87)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('إلغاء', style: TextStyle(color: Colors.white70)),
+            child: const Text('إلغاء', style: TextStyle(color: Color(0xFF4D5D44))),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
@@ -352,16 +369,16 @@ class _FightersScreenState extends State<FightersScreen> {
     return Directionality(
       textDirection: TextDirection.rtl,
       child: Scaffold(
-        backgroundColor: const Color(0xFF181B20),
+        backgroundColor: Colors.white,
         appBar: AppBar(
-          backgroundColor: const Color(0xFF181B20),
-          elevation: 0,
+          backgroundColor: const Color(0xFF4D5D44),
+          elevation: 1,
           title: const Text('المقاتلين', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
           centerTitle: true,
         ),
         floatingActionButton: FloatingActionButton(
-          backgroundColor: const Color(0xFF90B4FF),
-          foregroundColor: Colors.black,
+          backgroundColor: const Color(0xFF4D5D44),
+          foregroundColor: Colors.white,
           onPressed: _showAddFighterDialog,
           child: const Icon(Icons.person_add),
         ),
@@ -380,8 +397,16 @@ class _FightersScreenState extends State<FightersScreen> {
                       Expanded(
                         child: Container(
                           decoration: BoxDecoration(
-                            color: const Color(0xFF23262B),
+                            color: Colors.white,
                             borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: const Color(0xFFE0E0E0)),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 5,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                           child: Row(
@@ -390,12 +415,12 @@ class _FightersScreenState extends State<FightersScreen> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  const Text('إجمالي المقاتلين', style: TextStyle(color: Colors.white70, fontSize: 16)),
+                                  const Text('إجمالي المقاتلين', style: TextStyle(color: Color(0xFF4D5D44), fontSize: 16)),
                                   const SizedBox(height: 8),
-                                  Text('$total', style: const TextStyle(color: Color(0xFF90B4FF), fontSize: 32, fontWeight: FontWeight.bold)),
+                                  Text('$total', style: const TextStyle(color: Color(0xFF4D5D44), fontSize: 32, fontWeight: FontWeight.bold)),
                                 ],
                               ),
-                              const Icon(Icons.groups, color: Color(0xFF90B4FF), size: 40),
+                              const Icon(Icons.groups, color: Color(0xFF4D5D44), size: 40),
                             ],
                           ),
                         ),
@@ -404,86 +429,158 @@ class _FightersScreenState extends State<FightersScreen> {
                   );
                 },
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 24),
+              // Search Bar
+              Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: Colors.grey[50],
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                ),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    hintText: 'بحث عن مقاتل...',
+                    prefixIcon: Icon(Icons.search, color: Color(0xFF4D5D44)),
+                    border: InputBorder.none,
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  ),
+                  textDirection: TextDirection.rtl,
+                  textAlign: TextAlign.right,
+                  onChanged: (text) {
+                    setState(() {
+                      _searchText = text;
+                    });
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
               // Fighters List
               Expanded(
                 child: FutureBuilder<List<Map<String, dynamic>>>(
                   future: Provider.of<DatabaseService>(context, listen: false).getAllFighters(),
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4D5D44)),
+                        ),
+                      );
                     }
                     if (snapshot.hasError) {
-                      return Center(child: Text('حدث خطأ: ${snapshot.error}', style: TextStyle(color: Colors.white)));
+                      return Center(
+                        child: Text(
+                          'خطأ: ${snapshot.error}',
+                          style: const TextStyle(color: Colors.red),
+                        ),
+                      );
                     }
-                    final fighters = snapshot.data ?? [];
-                    if (fighters.isEmpty) {
-                      return const Center(child: Text('لا يوجد مقاتلين', style: TextStyle(color: Colors.white70)));
+                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                      return const Center(
+                        child: Text(
+                          'لا يوجد مقاتلين',
+                          style: TextStyle(color: Colors.black54, fontSize: 18),
+                        ),
+                      );
                     }
-                    return ListView.separated(
-                      itemCount: fighters.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 12),
-                      itemBuilder: (context, index) {
-                        final fighter = fighters[index];
-                        return Container(
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF23262B),
-                            borderRadius: BorderRadius.circular(16),
+
+                    final fighters = snapshot.data!;
+                    // Filter fighters by search text
+                    List<Map<String, dynamic>> filteredFighters = fighters;
+                    if (_searchText.isNotEmpty) {
+                      filteredFighters = fighters.where((fighter) {
+                        return fighter['name'].toString().contains(_searchText) ||
+                               fighter['number'].toString().contains(_searchText) ||
+                               (fighter['department'] != null && fighter['department'].toString().contains(_searchText));
+                      }).toList();
+                    }
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFFE0E0E0)),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 5,
+                            offset: const Offset(0, 2),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                          child: Row(
-                            children: [
-                              CircleAvatar(
-                                backgroundColor: const Color(0xFF90B4FF),
-                                child: const Icon(Icons.person, color: Colors.black),
+                        ],
+                      ),
+                      child: ListView.builder(
+                        itemCount: filteredFighters.length,
+                        itemBuilder: (context, index) {
+                          final fighter = filteredFighters[index];
+                          final isActive = fighter['status'] == DatabaseService.statusActive;
+                          
+                          return Container(
+                            decoration: BoxDecoration(
+                              border: Border(
+                                bottom: BorderSide(
+                                  color: Colors.grey.withOpacity(0.2),
+                                  width: 1,
+                                ),
                               ),
-                              const SizedBox(width: 16),
-                              Expanded(
+                            ),
+                            child: ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: isActive ? const Color(0xFF4D5D44) : Colors.red,
+                                child: Text(
+                                  fighter['name'].substring(0, 1),
+                                  style: const TextStyle(color: Colors.white),
+                                ),
+                              ),
+                              title: Directionality(
+                                textDirection: TextDirection.rtl,
+                                child: Text(
+                                  fighter['name'],
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ),
+                              subtitle: Directionality(
+                                textDirection: TextDirection.rtl,
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(fighter['name'], style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 4),
-                                    Text('الرقم: ${fighter['number']}', style: const TextStyle(color: Colors.white70, fontSize: 14)),
-                                    if ((fighter['department'] ?? '').toString().isNotEmpty)
-                                      Text('القسم: ${fighter['department']}', style: const TextStyle(color: Colors.white54, fontSize: 13)),
+                                    Text(
+                                      'رقم الهاتف: ${fighter['number']}',
+                                      style: const TextStyle(color: Colors.black54),
+                                    ),
+                                    Text(
+                                      'القسم: ${fighter['department'] ?? '-'}',
+                                      style: const TextStyle(color: Colors.black54),
+                                    ),
                                   ],
                                 ),
                               ),
-                              const SizedBox(width: 16),
-                              // QR Code button
-                              IconButton(
-                                icon: const Icon(Icons.qr_code, color: Color(0xFF90B4FF)),
-                                tooltip: 'عرض رمز QR',
-                                onPressed: () => _showQRCodeDialog(
-                                  fighter['id'].toString(),
-                                  fighter['name'],
-                                  fighter['qr_image_path'],
-                                ),
-                              ),
-                              // Status Switch
-                              Column(
+                              trailing: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  Text(fighter['status'], style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                  Switch(
-                                    value: fighter['status'] == DatabaseService.statusActive,
-                                    activeColor: Colors.green,
-                                    inactiveThumbColor: Colors.red,
-                                    onChanged: (val) => _toggleFighterStatus(fighter['id'], fighter['status']),
+                                  IconButton(
+                                    icon: const Icon(Icons.qr_code, color: Color(0xFF4D5D44)),
+                                    tooltip: 'عرض رمز QR',
+                                    onPressed: () => _showQRCode(fighter),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.edit, color: Color(0xFF4D5D44)),
+                                    tooltip: 'تعديل بيانات المقاتل',
+                                    onPressed: () => _showEditFighterDialog(fighter),
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    tooltip: 'حذف المقاتل',
+                                    onPressed: () => _confirmDeleteFighter(fighter),
                                   ),
                                 ],
                               ),
-                              const SizedBox(width: 16),
-                              // Delete button
-                              IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                tooltip: 'حذف',
-                                onPressed: () => _deleteFighter(fighter['id']),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
+                            ),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),
@@ -493,5 +590,82 @@ class _FightersScreenState extends State<FightersScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _showQRCode(Map<String, dynamic> fighter) async {
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'رمز QR للمقاتل: ${fighter['name']}',
+          style: const TextStyle(color: Color(0xFF4D5D44)),
+          textAlign: TextAlign.center,
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (fighter['qr_image_path'] != null && fighter['qr_image_path'].isNotEmpty)
+              Container(
+                width: 250,
+                height: 250,
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: const Color(0xFFE0E0E0)),
+                ),
+                child: Image.file(
+                  File(fighter['qr_image_path']),
+                  fit: BoxFit.contain,
+                ),
+              )
+            else
+              const Center(
+                child: Text('QR صورة غير متاحة'),
+              ),
+            const SizedBox(height: 16),
+            Text(
+              'الاسم: ${fighter['name']}',
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+            Text(
+              'القسم: ${fighter['department'] ?? '-'}',
+              style: const TextStyle(fontSize: 16, color: Colors.black87),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق', style: TextStyle(color: Color(0xFF4D5D44))),
+          ),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.print),
+            label: const Text('طباعة'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF4D5D44),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () => _printSingleQRCode(fighter),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _printSingleQRCode(Map<String, dynamic> fighter) async {
+    // Implementation of _printSingleQRCode method
+  }
+
+  Future<void> _showEditFighterDialog(Map<String, dynamic> fighter) async {
+    // Implementation of _showEditFighterDialog method
+  }
+
+  Future<void> _confirmDeleteFighter(Map<String, dynamic> fighter) async {
+    // Implementation of _confirmDeleteFighter method
   }
 } 

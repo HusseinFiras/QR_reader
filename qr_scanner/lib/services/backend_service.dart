@@ -59,6 +59,7 @@ class BackendService extends ChangeNotifier {
   Stream<String> get errorStream => _errorStreamController.stream;
   bool get isConnected => _isConnected;
   List<Map<String, dynamic>> get detectedCodes => List.unmodifiable(_detectedCodes);
+  SoundService get soundService => _soundService;
 
   Future<void> initialize() async {
     await _soundService.initialize();
@@ -164,7 +165,6 @@ class BackendService extends ChangeNotifier {
 
             debugPrint('Detected QR code: ${qrResult.data}');
             _resultStreamController.add(qrResult);
-            _soundService.playQRDetectedSound();
             notifyListeners();
           }
         }

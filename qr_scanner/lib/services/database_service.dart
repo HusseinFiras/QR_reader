@@ -2,14 +2,19 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 
 class DatabaseService {
   static const String _databaseName = 'qr_scanner.db';
-  static const int _databaseVersion = 3;
+  static const int _databaseVersion = 4;
   
-  // Table name
+  // Custom database directory
+  static String? _customDatabaseDir;
+  
+  // Table names
   static const String tableFighters = 'fighters';
   static const String tableDepartments = 'departments';
+  static const String tableAttendance = 'attendance';
   
   // Column names
   static const String columnId = 'id';
@@ -20,9 +25,17 @@ class DatabaseService {
   static const String columnQrImagePath = 'qr_image_path';
   static const String columnStatus = 'status';
   
-  // Status values
+  // Attendance columns
+  static const String columnFighterId = 'fighter_id';
+  static const String columnTimestamp = 'timestamp';
+  static const String columnType = 'type';
+  static const String columnNotes = 'notes';
+  
+  // Status & Type values
   static const String statusActive = 'فعال';
   static const String statusInactive = 'غير فعال';
+  static const String typeCheckIn = 'حضور';
+  static const String typeCheckOut = 'انصراف';
   
   // Make this a singleton class
   DatabaseService._privateConstructor();
@@ -36,19 +49,60 @@ class DatabaseService {
     return _database!;
   }
   
+  // Set a custom database directory
+  static void setCustomDatabaseDirectory(String path) {
+    _customDatabaseDir = path;
+    debugPrint('DatabaseService: Custom database directory set to: $path');
+  }
+  
+  // Get the current database path
+  static Future<String> getDatabasePath() async {
+    if (_customDatabaseDir != null) {
+      return join(_customDatabaseDir!, _databaseName);
+    } else {
+      // Default to application documents directory
+      Directory appDir = await getApplicationDocumentsDirectory();
+      return join(appDir.path, _databaseName);
+    }
+  }
+  
   // Initialize the database
   Future<Database> _initDatabase() async {
     // Initialize FFI
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
     
-    // Get the application documents directory
-    Directory documentsDirectory = await getApplicationDocumentsDirectory();
-    String path = join(documentsDirectory.path, _databaseName);
+    // Create a fixed location for the database
+    String dbPath;
+    
+    if (_customDatabaseDir != null) {
+      // Use custom directory if set
+      dbPath = join(_customDatabaseDir!, _databaseName);
+      
+      // Make sure the directory exists
+      Directory dir = Directory(_customDatabaseDir!);
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+      }
+    } else {
+      // Default path: use app's root directory or workspace directory
+      String defaultDir = Directory.current.path;
+      
+      // Create a data directory in the app folder
+      String dataDir = join(defaultDir, 'data');
+      Directory dir = Directory(dataDir);
+      if (!dir.existsSync()) {
+        dir.createSync(recursive: true);
+      }
+      
+      dbPath = join(dataDir, _databaseName);
+    }
+    
+    debugPrint('DatabaseService: Database path: $dbPath');
     
     // Open the database
     return await openDatabase(
-      path,
+      dbPath,
       version: _databaseVersion,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
@@ -72,6 +126,16 @@ class DatabaseService {
       CREATE TABLE $tableDepartments (
         $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
         $columnName TEXT NOT NULL UNIQUE
+      )
+    ''');
+    await db.execute('''
+      CREATE TABLE $tableAttendance (
+        $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+        $columnFighterId INTEGER NOT NULL,
+        $columnTimestamp TEXT NOT NULL,
+        $columnType TEXT NOT NULL,
+        $columnNotes TEXT,
+        FOREIGN KEY ($columnFighterId) REFERENCES $tableFighters ($columnId)
       )
     ''');
   }
@@ -109,6 +173,19 @@ class DatabaseService {
         CREATE TABLE $tableDepartments (
           $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
           $columnName TEXT NOT NULL UNIQUE
+        )
+      ''');
+    }
+    if (oldVersion < 4) {
+      // Add attendance table in version 4
+      await db.execute('''
+        CREATE TABLE $tableAttendance (
+          $columnId INTEGER PRIMARY KEY AUTOINCREMENT,
+          $columnFighterId INTEGER NOT NULL,
+          $columnTimestamp TEXT NOT NULL,
+          $columnType TEXT NOT NULL,
+          $columnNotes TEXT,
+          FOREIGN KEY ($columnFighterId) REFERENCES $tableFighters ($columnId)
         )
       ''');
     }
@@ -199,6 +276,63 @@ class DatabaseService {
     Database db = await database;
     final result = await db.query(tableDepartments);
     return result.map((row) => row[columnName] as String).toList();
+  }
+  
+  // Attendance management
+  Future<int> recordAttendance(Map<String, dynamic> attendance) async {
+    Database db = await database;
+    return await db.insert(tableAttendance, attendance);
+  }
+  
+  Future<List<Map<String, dynamic>>> getAttendanceRecords(int fighterId) async {
+    Database db = await database;
+    return await db.query(
+      tableAttendance,
+      where: '$columnFighterId = ?',
+      whereArgs: [fighterId],
+      orderBy: '$columnTimestamp DESC',
+    );
+  }
+  
+  Future<List<Map<String, dynamic>>> getAllAttendanceRecords() async {
+    Database db = await database;
+    return await db.rawQuery('''
+      SELECT a.*, f.$columnName, f.$columnNumber, f.$columnDepartment
+      FROM $tableAttendance a
+      JOIN $tableFighters f ON a.$columnFighterId = f.$columnId
+      ORDER BY a.$columnTimestamp DESC
+    ''');
+  }
+  
+  // Get attendance records for a specific date
+  Future<List<Map<String, dynamic>>> getAttendanceByDate(String date) async {
+    Database db = await database;
+    
+    // Search for timestamp starting with the date
+    String likePattern = '$date%';
+    
+    // Join with fighters table to get fighter details
+    return await db.rawQuery('''
+      SELECT a.*, f.name, f.number, f.department
+      FROM $tableAttendance a
+      JOIN $tableFighters f ON a.$columnFighterId = f.$columnId
+      WHERE a.$columnTimestamp LIKE ?
+      ORDER BY a.$columnTimestamp DESC
+    ''', [likePattern]);
+  }
+  
+  // Get attendance records between two dates
+  Future<List<Map<String, dynamic>>> getAttendanceBetweenDates(String startDate, String endDate) async {
+    Database db = await database;
+    
+    // Join with fighters table to get fighter details
+    return await db.rawQuery('''
+      SELECT a.*, f.name, f.number, f.department
+      FROM $tableAttendance a
+      JOIN $tableFighters f ON a.$columnFighterId = f.$columnId
+      WHERE a.$columnTimestamp >= ? AND a.$columnTimestamp < ?
+      ORDER BY a.$columnTimestamp DESC
+    ''', [startDate, endDate]);
   }
   
   // Close the database
