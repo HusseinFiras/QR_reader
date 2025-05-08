@@ -16,6 +16,7 @@ import 'package:path/path.dart' as path;
 import 'dart:math' as math;
 import 'package:intl/intl.dart';
 import 'dart:ui' as ui;
+import 'dart:async';
 
 class HomeScreen extends StatefulWidget {
   final String initialPage;
@@ -58,6 +59,9 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
   // List to hold recent attendance records
   List<Map<String, dynamic>> _recentAttendance = [];
   
+  late ValueNotifier<DateTime> _nowNotifier;
+  late Timer _clockTimer;
+
   @override
   void initState() {
     debugPrint('HomeScreen: Initializing state...');
@@ -80,6 +84,10 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
     
     _initializeServices();
     _loadRecentAttendance();
+    _nowNotifier = ValueNotifier<DateTime>(DateTime.now());
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      _nowNotifier.value = DateTime.now();
+    });
   }
   
   @override
@@ -183,6 +191,8 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
     _scanAnimationController.dispose();
     super.dispose();
     debugPrint('HomeScreen: Disposed successfully');
+    _clockTimer.cancel();
+    _nowNotifier.dispose();
   }
 
   Future<void> _loadRecentAttendance() async {
@@ -1310,11 +1320,54 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
         appBar: AppBar(
           backgroundColor: const Color(0xFF4D5D44), // Army green
           elevation: 1,
-          title: Text(
-            selectedPage == 'fighters' ? 'المقاتلين' : 
-            selectedPage == 'dashboard' ? 'لوحة التحكم' : 
-            selectedPage == 'reports' ? 'التقارير' : 'تسجيل الدوام',
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          title: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                selectedPage == 'fighters' ? 'المقاتلين' : 
+                selectedPage == 'dashboard' ? 'لوحة التحكم' : 
+                selectedPage == 'reports' ? 'التقارير' : 'تسجيل الدوام',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              // Real-time clock next to the title
+              ValueListenableBuilder<DateTime>(
+                valueListenable: _nowNotifier,
+                builder: (context, now, _) {
+                  String timeStr = DateFormat('hh:mm:ss a').format(now);
+                  // Replace AM/PM with Arabic
+                  timeStr = timeStr.replaceAll('AM', 'صباح').replaceAll('PM', 'مساء');
+                  return Container(
+                    padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.10),
+                          blurRadius: 6,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(Icons.access_time, color: Color(0xFF4D5D44), size: 20),
+                        const SizedBox(width: 4),
+                        Text(
+                          timeStr,
+                          style: const TextStyle(
+                            color: Color(0xFF4D5D44),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            letterSpacing: 1.1,
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ],
           ),
           iconTheme: const IconThemeData(color: Colors.white),
         ),
@@ -1327,7 +1380,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 8),
                   _SidebarItem(
                     icon: Icons.dashboard,
                     label: 'لوحة التحكم',
