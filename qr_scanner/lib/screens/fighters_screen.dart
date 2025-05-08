@@ -807,14 +807,302 @@ class _FightersScreenState extends State<FightersScreen> {
   }
 
   Future<void> _printSingleQRCode(Map<String, dynamic> fighter) async {
-    // Implementation of _printSingleQRCode method
+    final qrPath = fighter['qr_image_path'] ?? '';
+    if (qrPath.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('مسار ملف QR غير متوفر')),
+      );
+      return;
+    }
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('معلومات ملف QR', style: TextStyle(color: Color(0xFF4D5D44))),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text('تم حفظ رمز QR في المسار التالي:', style: TextStyle(color: Color(0xFF4D5D44))),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF5F5F5),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: const Color(0xFFE0E0E0)),
+              ),
+              child: Text(
+                qrPath,
+                style: const TextStyle(color: Colors.black87, fontSize: 13),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.folder_open),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4D5D44),
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                // Open the folder containing the QR code
+                final dir = File(qrPath).parent.path;
+                await Process.run('explorer.exe', [dir]);
+              },
+              label: const Text('فتح المجلد'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('إغلاق', style: TextStyle(color: Color(0xFF4D5D44))),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _showEditFighterDialog(Map<String, dynamic> fighter) async {
-    // Implementation of _showEditFighterDialog method
+    _nameController.text = fighter['name'] ?? '';
+    _numberController.text = fighter['number'] ?? '';
+    _selectedDepartment = fighter['department'];
+    _isActive = fighter['status'] == DatabaseService.statusActive;
+    await _loadDepartments();
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setStateDialog) {
+            return AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: const Text('تعديل بيانات المقاتل', textDirection: TextDirection.rtl, style: TextStyle(color: Color(0xFF4D5D44))),
+              content: SizedBox(
+                width: 350,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'اسم المقاتل',
+                        border: OutlineInputBorder(),
+                        alignLabelWithHint: true,
+                        labelStyle: TextStyle(color: Color(0xFF4D5D44)),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4D5D44), width: 2),
+                        ),
+                      ),
+                      textDirection: TextDirection.rtl,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(color: Colors.black87),
+                      cursorColor: const Color(0xFF4D5D44),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _numberController,
+                      decoration: const InputDecoration(
+                        labelText: 'رقم الهاتف',
+                        border: OutlineInputBorder(),
+                        alignLabelWithHint: true,
+                        labelStyle: TextStyle(color: Color(0xFF4D5D44)),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4D5D44), width: 2),
+                        ),
+                      ),
+                      textDirection: TextDirection.rtl,
+                      textAlign: TextAlign.right,
+                      style: const TextStyle(color: Colors.black87),
+                      cursorColor: const Color(0xFF4D5D44),
+                      keyboardType: TextInputType.number,
+                      inputFormatters: [
+                        FilteringTextInputFormatter.digitsOnly,
+                        LengthLimitingTextInputFormatter(11),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<String>(
+                      value: _selectedDepartment,
+                      isExpanded: true,
+                      decoration: const InputDecoration(
+                        labelText: 'القسم او الفوج',
+                        border: OutlineInputBorder(),
+                        alignLabelWithHint: true,
+                        labelStyle: TextStyle(color: Color(0xFF4D5D44)),
+                        focusedBorder: OutlineInputBorder(
+                          borderSide: BorderSide(color: Color(0xFF4D5D44), width: 2),
+                        ),
+                      ),
+                      items: [
+                        ..._departments.map((dep) => DropdownMenuItem(
+                              value: dep,
+                              child: Text(dep, textDirection: TextDirection.rtl, textAlign: TextAlign.right),
+                            )),
+                        DropdownMenuItem(
+                          value: '__add_new__',
+                          child: Row(
+                            children: const [
+                              Icon(Icons.add, color: Color(0xFF4D5D44)),
+                              SizedBox(width: 8),
+                              Text('إضافة قسم جديد', style: TextStyle(color: Color(0xFF4D5D44))),
+                            ],
+                          ),
+                        ),
+                      ],
+                      onChanged: (val) async {
+                        if (val == '__add_new__') {
+                          _newDepartmentController.clear();
+                          final newDep = await showDialog<String>(
+                            context: context,
+                            builder: (context) => AlertDialog(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                              title: const Text('إضافة قسم جديد', style: TextStyle(color: Color(0xFF4D5D44))),
+                              content: TextField(
+                                controller: _newDepartmentController,
+                                decoration: const InputDecoration(
+                                  labelText: 'القسم',
+                                  border: OutlineInputBorder(),
+                                  alignLabelWithHint: true,
+                                  labelStyle: TextStyle(color: Color(0xFF4D5D44)),
+                                  focusedBorder: OutlineInputBorder(
+                                    borderSide: BorderSide(color: Color(0xFF4D5D44), width: 2),
+                                  ),
+                                ),
+                                textDirection: TextDirection.rtl,
+                                textAlign: TextAlign.right,
+                                style: const TextStyle(color: Colors.black87),
+                                cursorColor: const Color(0xFF4D5D44),
+                              ),
+                              actions: [
+                                TextButton(
+                                  onPressed: () => Navigator.pop(context),
+                                  child: const Text('إلغاء', style: TextStyle(color: Color(0xFF4D5D44))),
+                                ),
+                                ElevatedButton(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF4D5D44),
+                                    foregroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                                  ),
+                                  onPressed: () {
+                                    Navigator.pop(context, _newDepartmentController.text.trim());
+                                  },
+                                  child: const Text('إضافة'),
+                                ),
+                              ],
+                            ),
+                          );
+                          if (newDep != null && newDep.isNotEmpty) {
+                            final databaseService = Provider.of<DatabaseService>(context, listen: false);
+                            await databaseService.insertDepartment(newDep);
+                            await _loadDepartments();
+                            setStateDialog(() {
+                              _selectedDepartment = newDep;
+                            });
+                          }
+                        } else {
+                          setStateDialog(() {
+                            _selectedDepartment = val;
+                          });
+                        }
+                      },
+                      style: const TextStyle(color: Colors.black87),
+                      dropdownColor: Colors.white,
+                      iconEnabledColor: const Color(0xFF4D5D44),
+                    ),
+                    const SizedBox(height: 16),
+                    Directionality(
+                      textDirection: TextDirection.rtl,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          const Text('الحالة:', style: TextStyle(color: Color(0xFF4D5D44))),
+                          const SizedBox(width: 8),
+                          Text(_isActive ? 'فعال' : 'غير فعال', style: const TextStyle(color: Colors.black87)),
+                          Switch(
+                            value: _isActive,
+                            activeColor: const Color(0xFF4D5D44),
+                            inactiveThumbColor: Colors.red,
+                            onChanged: (val) {
+                              setStateDialog(() {
+                                _isActive = val;
+                              });
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('إلغاء', style: TextStyle(color: Color(0xFF4D5D44))),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF4D5D44),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: () async {
+                    if (_nameController.text.isEmpty || _numberController.text.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('الرجاء إدخال الاسم والرقم')),
+                      );
+                      return;
+                    }
+                    if (_numberController.text.length != 11) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('الرقم غير صحيح يجب أن يكون 11 رقماً')),
+                      );
+                      return;
+                    }
+                    if (_selectedDepartment == null || _selectedDepartment!.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('الرجاء اختيار القسم')),
+                      );
+                      return;
+                    }
+                    try {
+                      final databaseService = Provider.of<DatabaseService>(context, listen: false);
+                      await databaseService.updateFighter({
+                        'id': fighter['id'],
+                        'name': _nameController.text,
+                        'number': _numberController.text,
+                        'department': _selectedDepartment,
+                        'status': _isActive ? DatabaseService.statusActive : DatabaseService.statusInactive,
+                      });
+                      setState(() {});
+                      Navigator.pop(context);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('تم تحديث بيانات المقاتل')),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('حدث خطأ: $e')),
+                      );
+                    }
+                  },
+                  child: const Text('حفظ التعديلات'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _confirmDeleteFighter(Map<String, dynamic> fighter) async {
-    // Implementation of _confirmDeleteFighter method
+    final id = fighter['id'];
+    if (id != null) {
+      await _deleteFighter(id);
+    }
   }
 } 
