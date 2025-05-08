@@ -15,6 +15,7 @@ import 'dart:io';
 import 'package:path/path.dart' as path;
 import 'dart:math' as math;
 import 'package:intl/intl.dart';
+import 'dart:ui' as ui;
 
 class HomeScreen extends StatefulWidget {
   final String initialPage;
@@ -306,7 +307,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
       context: context,
       initialTime: TimeOfDay(hour: now.hour, minute: now.minute),
       builder: (context, child) {
-        return Directionality(textDirection: TextDirection.rtl, child: child!);
+        return Directionality(textDirection: ui.TextDirection.rtl, child: child!);
       },
     );
     if (picked != null) {
@@ -393,7 +394,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Directionality(
-              textDirection: TextDirection.rtl,
+              textDirection: ui.TextDirection.rtl,
               child: const Text(
                 'مسار قاعدة البيانات:',
                 style: TextStyle(
@@ -411,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
                 border: Border.all(color: const Color(0xFFE0E0E0)),
               ),
               child: Directionality(
-                textDirection: TextDirection.ltr,
+                textDirection: ui.TextDirection.ltr,
                 child: Row(
                   children: [
                     Expanded(
@@ -1033,115 +1034,125 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
               ],
             ),
             padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF4D5D44).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.edit_document,
-                        color: Color(0xFF4D5D44),
-                        size: 24,
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return SingleChildScrollView(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                    child: IntrinsicHeight(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(10),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF4D5D44).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Icon(
+                                  Icons.edit_document,
+                                  color: Color(0xFF4D5D44),
+                                  size: 24,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              const Text(
+                                'إدخال يدوي',
+                                style: TextStyle(
+                                  color: Color(0xFF4D5D44), 
+                                  fontSize: 22, 
+                                  fontWeight: FontWeight.bold
+                                ),
+                                textAlign: TextAlign.right,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+                          // Fighter ID field
+                          _buildStyledTextField(
+                            controller: _idController,
+                            label: 'رقم المقاتل (ID)',
+                            icon: Icons.badge,
+                            readOnly: true,
+                          ),
+                          const SizedBox(height: 16),
+                          // Fighter name field
+                          _buildStyledTextField(
+                            controller: _nameController,
+                            label: 'اسم المقاتل',
+                            icon: Icons.person,
+                            readOnly: true,
+                          ),
+                          const SizedBox(height: 16),
+                          // Fighter phone number field
+                          _buildStyledTextField(
+                            controller: _numberController,
+                            label: 'رقم الهاتف',
+                            icon: Icons.phone,
+                          ),
+                          const SizedBox(height: 16),
+                          // Fighter department field
+                          _buildStyledTextField(
+                            controller: _departmentController,
+                            label: 'القسم',
+                            icon: Icons.business,
+                            readOnly: true,
+                          ),
+                          const SizedBox(height: 16),
+                          // Date picker field
+                          _buildStyledTextField(
+                            controller: _dateController,
+                            label: 'التاريخ',
+                            icon: Icons.calendar_today,
+                            readOnly: true,
+                            onTap: _pickDate,
+                          ),
+                          const SizedBox(height: 16),
+                          // Time picker field
+                          _buildStyledTextField(
+                            controller: _timeController,
+                            label: 'الوقت',
+                            icon: Icons.access_time,
+                            readOnly: true,
+                            onTap: _pickTime,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildStyledTextField(
+                            controller: _notesController,
+                            label: 'ملاحظات',
+                            icon: Icons.note,
+                            maxLines: 2,
+                          ),
+                          const Spacer(),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'تسجيل حضور',
+                                  icon: Icons.login,
+                                  color: const Color(0xFF4D5D44),
+                                  onPressed: () => _recordAttendance('حضور'),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: _buildActionButton(
+                                  label: 'تسجيل انصراف',
+                                  icon: Icons.logout,
+                                  color: const Color(0xFF4D5D44),
+                                  onPressed: () => _recordAttendance('انصراف'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    const Text(
-                      'إدخال يدوي',
-                      style: TextStyle(
-                        color: Color(0xFF4D5D44), 
-                        fontSize: 22, 
-                        fontWeight: FontWeight.bold
-                      ),
-                      textAlign: TextAlign.right,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 24),
-                // Fighter ID field
-                _buildStyledTextField(
-                  controller: _idController,
-                  label: 'رقم المقاتل (ID)',
-                  icon: Icons.badge,
-                  readOnly: true,
-                ),
-                const SizedBox(height: 16),
-                // Fighter name field
-                _buildStyledTextField(
-                  controller: _nameController,
-                  label: 'اسم المقاتل',
-                  icon: Icons.person,
-                  readOnly: true,
-                ),
-                const SizedBox(height: 16),
-                // Fighter phone number field
-                _buildStyledTextField(
-                  controller: _numberController,
-                  label: 'رقم الهاتف',
-                  icon: Icons.phone,
-                ),
-                const SizedBox(height: 16),
-                // Fighter department field
-                _buildStyledTextField(
-                  controller: _departmentController,
-                  label: 'القسم',
-                  icon: Icons.business,
-                  readOnly: true,
-                ),
-                const SizedBox(height: 16),
-                // Date picker field
-                _buildStyledTextField(
-                  controller: _dateController,
-                  label: 'التاريخ',
-                  icon: Icons.calendar_today,
-                  readOnly: true,
-                  onTap: _pickDate,
-                ),
-                
-                const SizedBox(height: 16),
-                // Time picker field
-                _buildStyledTextField(
-                  controller: _timeController,
-                  label: 'الوقت',
-                  icon: Icons.access_time,
-                  readOnly: true,
-                  onTap: _pickTime,
-                ),
-                const SizedBox(height: 16),
-                _buildStyledTextField(
-                  controller: _notesController,
-                  label: 'ملاحظات',
-                  icon: Icons.note,
-                  maxLines: 2,
-                ),
-                const Spacer(),
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildActionButton(
-                        label: 'تسجيل حضور',
-                        icon: Icons.login,
-                        color: const Color(0xFF4D5D44),
-                        onPressed: () => _recordAttendance('حضور'),
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: _buildActionButton(
-                        label: 'تسجيل انصراف',
-                        icon: Icons.logout,
-                        color: const Color(0xFF4D5D44),
-                        onPressed: () => _recordAttendance('انصراف'),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                  ),
+                );
+              },
             ),
           ),
         ),
@@ -1293,7 +1304,7 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
   @override
   Widget build(BuildContext context) {
     return Directionality(
-      textDirection: TextDirection.rtl,
+      textDirection: ui.TextDirection.rtl,
       child: Scaffold(
         backgroundColor: Colors.white,
         appBar: AppBar(
@@ -1372,6 +1383,180 @@ class _HomeScreenState extends State<HomeScreen> with WidgetsBindingObserver, Si
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildRecentAttendanceSection() {
+    return Container(
+      margin: const EdgeInsets.only(top: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Card header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: const Color(0xFF4D5D44).withOpacity(0.1),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(16),
+                topRight: Radius.circular(16),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF4D5D44).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Icon(
+                    Icons.history,
+                    color: Color(0xFF4D5D44),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  'سجل الحضور الأخير',
+                  style: TextStyle(
+                    color: Color(0xFF4D5D44),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.refresh, color: Color(0xFF4D5D44), size: 20),
+                  onPressed: _loadRecentAttendance,
+                  tooltip: 'تحديث البيانات',
+                ),
+              ],
+            ),
+          ),
+          
+          // Attendance list
+          if (_recentAttendance.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              alignment: Alignment.center,
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.info_outline, color: Colors.grey.shade400, size: 48),
+                  const SizedBox(height: 8),
+                  Text(
+                    'لا يوجد سجلات حضور لليوم',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ListView.separated(
+              physics: const NeverScrollableScrollPhysics(),
+              shrinkWrap: true,
+              padding: EdgeInsets.zero,
+              itemCount: _recentAttendance.length,
+              separatorBuilder: (context, index) => Divider(
+                height: 1,
+                color: Colors.grey.shade200,
+                indent: 16,
+                endIndent: 16,
+              ),
+              itemBuilder: (context, index) {
+                final record = _recentAttendance[index];
+                final fighterName = record[DatabaseService.columnName] as String? ?? "غير معروف";
+                final timestamp = record[DatabaseService.columnTimestamp] as String;
+                final type = record[DatabaseService.columnType] as String;
+                
+                // Extract time from timestamp
+                final timePart = timestamp.split(' ').length > 1 ? timestamp.split(' ')[1] : '';
+                final formattedTime = _formatTime(
+                  DateFormat('yyyy-MM-dd HH:mm').parse(timestamp)
+                );
+                
+                return ListTile(
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  leading: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: type == DatabaseService.typeCheckIn
+                            ? [const Color(0xFF388E3C), const Color(0xFF4CAF50)]
+                            : [const Color(0xFFD32F2F), const Color(0xFFE57373)],
+                      ),
+                      borderRadius: BorderRadius.circular(10),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (type == DatabaseService.typeCheckIn 
+                            ? const Color(0xFF388E3C) 
+                            : const Color(0xFFD32F2F)).withOpacity(0.2),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Icon(
+                      type == DatabaseService.typeCheckIn
+                          ? Icons.login
+                          : Icons.logout,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                  title: Text(
+                    fighterName,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  subtitle: Text(
+                    type == DatabaseService.typeCheckIn
+                        ? 'حضور: $formattedTime'
+                        : 'انصراف: $formattedTime',
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      _getTimeAgo(timestamp),
+                      style: TextStyle(
+                        color: Colors.grey.shade700,
+                        fontSize: 10,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
+        ],
       ),
     );
   }
@@ -1574,180 +1759,6 @@ class ScanLinePainter extends CustomPainter {
   bool shouldRepaint(ScanLinePainter oldDelegate) => oldDelegate.progress != progress;
 }
 
-Widget _buildRecentAttendanceCard() {
-  return Container(
-    margin: const EdgeInsets.only(top: 24),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Card header
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF4D5D44).withOpacity(0.1),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4D5D44).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.history,
-                  color: Color(0xFF4D5D44),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'سجل الحضور الأخير',
-                style: TextStyle(
-                  color: Color(0xFF4D5D44),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Color(0xFF4D5D44), size: 20),
-                onPressed: _reloadRecentAttendance,
-                tooltip: 'تحديث البيانات',
-              ),
-            ],
-          ),
-        ),
-        
-        // Attendance list
-        if (_recentAttendance.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(24),
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.info_outline, color: Colors.grey.shade400, size: 48),
-                const SizedBox(height: 8),
-                Text(
-                  'لا يوجد سجلات حضور لليوم',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          ListView.separated(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            itemCount: _recentAttendance.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 1,
-              color: Colors.grey.shade200,
-              indent: 16,
-              endIndent: 16,
-            ),
-            itemBuilder: (context, index) {
-              final record = _recentAttendance[index];
-              final fighterName = record[DatabaseService.columnName] as String? ?? "غير معروف";
-              final timestamp = record[DatabaseService.columnTimestamp] as String;
-              final type = record[DatabaseService.columnType] as String;
-              
-              // Extract time from timestamp
-              final timePart = timestamp.split(' ').length > 1 ? timestamp.split(' ')[1] : '';
-              final formattedTime = _formatTime(
-                DateFormat('yyyy-MM-dd HH:mm').parse(timestamp)
-              );
-              
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: type == DatabaseService.typeCheckIn
-                          ? [const Color(0xFF388E3C), const Color(0xFF4CAF50)]
-                          : [const Color(0xFFD32F2F), const Color(0xFFE57373)],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (type == DatabaseService.typeCheckIn 
-                          ? const Color(0xFF388E3C) 
-                          : const Color(0xFFD32F2F)).withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    type == DatabaseService.typeCheckIn
-                        ? Icons.login
-                        : Icons.logout,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  fighterName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                subtitle: Text(
-                  type == DatabaseService.typeCheckIn
-                      ? 'حضور: $formattedTime'
-                      : 'انصراف: $formattedTime',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                  ),
-                ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _getTimeAgo(timestamp),
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-      ],
-    ),
-  );
-}
-
 String _getTimeAgo(String timestamp) {
   final recordTime = DateFormat('yyyy-MM-dd HH:mm').parse(timestamp);
   final now = DateTime.now();
@@ -1762,179 +1773,4 @@ String _getTimeAgo(String timestamp) {
   } else {
     return '${difference.inDays} يوم مضت';
   }
-}
-
-// Build the recent attendance section for the form
-Widget _buildRecentAttendanceSection() {
-  return Container(
-    margin: const EdgeInsets.only(top: 24),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: const Offset(0, 4),
-        ),
-      ],
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Card header
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: const Color(0xFF4D5D44).withOpacity(0.1),
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(16),
-              topRight: Radius.circular(16),
-            ),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF4D5D44).withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.history,
-                  color: Color(0xFF4D5D44),
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'سجل الحضور الأخير',
-                style: TextStyle(
-                  color: Color(0xFF4D5D44),
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const Spacer(),
-              IconButton(
-                icon: const Icon(Icons.refresh, color: Color(0xFF4D5D44), size: 20),
-                onPressed: _loadRecentAttendance,
-                tooltip: 'تحديث البيانات',
-              ),
-            ],
-          ),
-        ),
-        
-        // Attendance list
-        if (_recentAttendance.isEmpty)
-          Container(
-            padding: const EdgeInsets.all(24),
-            alignment: Alignment.center,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.info_outline, color: Colors.grey.shade400, size: 48),
-                const SizedBox(height: 8),
-                Text(
-                  'لا يوجد سجلات حضور لليوم',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 14,
-                  ),
-                ),
-              ],
-            ),
-          )
-        else
-          ListView.separated(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            padding: EdgeInsets.zero,
-            itemCount: _recentAttendance.length,
-            separatorBuilder: (context, index) => Divider(
-              height: 1,
-              color: Colors.grey.shade200,
-              indent: 16,
-              endIndent: 16,
-            ),
-            itemBuilder: (context, index) {
-              final record = _recentAttendance[index];
-              final fighterName = record[DatabaseService.columnName] as String? ?? "غير معروف";
-              final timestamp = record[DatabaseService.columnTimestamp] as String;
-              final type = record[DatabaseService.columnType] as String;
-              
-              // Extract time from timestamp
-              final timePart = timestamp.split(' ').length > 1 ? timestamp.split(' ')[1] : '';
-              final formattedTime = _formatTime(
-                DateFormat('yyyy-MM-dd HH:mm').parse(timestamp)
-              );
-              
-              return ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                leading: Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: type == DatabaseService.typeCheckIn
-                          ? [const Color(0xFF388E3C), const Color(0xFF4CAF50)]
-                          : [const Color(0xFFD32F2F), const Color(0xFFE57373)],
-                    ),
-                    borderRadius: BorderRadius.circular(10),
-                    boxShadow: [
-                      BoxShadow(
-                        color: (type == DatabaseService.typeCheckIn 
-                          ? const Color(0xFF388E3C) 
-                          : const Color(0xFFD32F2F)).withOpacity(0.2),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-                  ),
-                  child: Icon(
-                    type == DatabaseService.typeCheckIn
-                        ? Icons.login
-                        : Icons.logout,
-                    color: Colors.white,
-                    size: 20,
-                  ),
-                ),
-                title: Text(
-                  fighterName,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-                subtitle: Text(
-                  type == DatabaseService.typeCheckIn
-                      ? 'حضور: $formattedTime'
-                      : 'انصراف: $formattedTime',
-                  style: TextStyle(
-                    color: Colors.grey.shade600,
-                    fontSize: 12,
-                  ),
-                ),
-                trailing: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    _getTimeAgo(timestamp),
-                    style: TextStyle(
-                      color: Colors.grey.shade700,
-                      fontSize: 10,
-                    ),
-                  ),
-                ),
-              );
-            },
-          ),
-      ],
-    ),
-  );
 } 

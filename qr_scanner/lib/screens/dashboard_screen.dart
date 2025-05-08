@@ -319,7 +319,7 @@ class _DashboardScreenState extends State<DashboardScreen> with SingleTickerProv
                       
                       // Today's date display
                       Positioned(
-                        top: 110,
+                        top: 70,
                         left: 0,
                         right: 0,
                         child: Container(
